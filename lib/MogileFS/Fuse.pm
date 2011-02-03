@@ -35,11 +35,13 @@ my %files :shared;
 my $nextfile :shared = 1;
 
 #Function to mount the specified MogileFS domain to the filesystem
+#	class      => the class to store files as in MogileFS
 #	domain     => the domain to use in MogileFS
 #	mountpoint => where to mount the filesystem
 #	trackers   => the addresses for the MogileFS trackers
 sub mount(%) {
 	my %opt = validate(@_, {
+		'class'      => {'type' => SCALAR, 'default' => undef},
 		'domain'     => {'type' => SCALAR},
 		'mountpoint' => {'type' => SCALAR},
 		'trackers'   => {'type' => ARRAYREF},
@@ -54,6 +56,7 @@ sub mount(%) {
 
 	#process the MogileFS config
 	$config{'mountpoint'} = $opt{'mountpoint'};
+	$config{'class'} = $opt{'class'};
 	$config{'domain'} = $opt{'domain'};
 	$config{'trackers'} = shared_clone([]);
 	push @{$config{'trackers'}}, @{$opt{'trackers'}};
@@ -70,6 +73,7 @@ sub mount(%) {
 		'threaded' => 1,
 
 		#callback functions
+		'mknod'   => __PACKAGE__ . '::e_mknod',
 		'open'    => __PACKAGE__ . '::e_open',
 	);
 
@@ -119,6 +123,31 @@ sub sanitize_path($) {
 }
 
 ##Callback Functions
+
+sub e_mknod($) {
+	my ($path) = @_;
+	$path = sanitize_path($path);
+	logmsg(1, "e_mknod: $path");
+
+	#attempt creating an empty file
+	my $mogc = MogileFS();
+	my ($errcode, $errstr) = (-1, '');
+	my $response = eval {$mogc->new_file($path, $config{'class'})->close};
+	if($@ || !$response) {
+		#set the error code and string if we have a MogileFS::Client object
+		if($mogc) {
+			$errcode = $mogc->errcode || -1;
+			$errstr = $mogc->errstr || '';
+		}
+		logmsg(0, "Error creating file: $errcode: $errstr");
+		$! = $errstr;
+		$? = $errcode;
+		return -EIO();
+	}
+
+	#return success
+	return 0;
+}
 
 sub e_open($$) {
 	my ($path, $flags) = @_;
