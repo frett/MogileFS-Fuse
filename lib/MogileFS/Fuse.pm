@@ -92,6 +92,7 @@ sub mount(%) {
 		'open'        => __PACKAGE__ . '::e_open',
 		'readlink'    => __PACKAGE__ . '::e_readlink',
 		'rename'      => __PACKAGE__ . '::e_rename',
+		'setxattr'    => __PACKAGE__ . '::e_setxattr',
 		'symlink'     => __PACKAGE__ . '::e_symlink',
 		'unlink'      => __PACKAGE__ . '::e_unlink',
 	);
@@ -316,6 +317,11 @@ sub e_rename {
 
 	#return success
 	return 0;
+}
+
+sub e_setxattr($$$) {
+	logmsg(DEBUG, "e_setxattr: $_[0]: $_[1] => $_[2]");
+	return -EOPNOTSUPP();
 }
 
 sub e_symlink($$) {
