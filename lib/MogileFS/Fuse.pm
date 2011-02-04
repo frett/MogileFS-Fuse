@@ -86,6 +86,7 @@ sub mount(%) {
 		'getattr'     => __PACKAGE__ . '::e_getattr',
 		'getdir'      => __PACKAGE__ . '::e_getdir',
 		'getxattr'    => __PACKAGE__ . '::e_getxattr',
+		'link'        => __PACKAGE__ . '::e_link',
 		'listxattr'   => __PACKAGE__ . '::e_listxattr',
 		'mknod'       => __PACKAGE__ . '::e_mknod',
 		'open'        => __PACKAGE__ . '::e_open',
@@ -227,6 +228,11 @@ sub e_getdir($) {
 
 sub e_getxattr($$) {
 	logmsg(DEBUG, "e_getxattr: $_[0]: $_[1]");
+	return -EOPNOTSUPP();
+}
+
+sub e_link($$) {
+	logmsg(DEBUG, "e_link: $_[0] $_[1]");
 	return -EOPNOTSUPP();
 }
 
