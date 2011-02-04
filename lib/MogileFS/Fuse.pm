@@ -6,13 +6,17 @@ use base qw{Exporter};
 use threads;
 use threads::shared;
 
+#log levels
+use constant ERROR => 0;
+use constant DEBUG => 1;
+
 #list of functions available for export
 our @EXPORT_OK = qw{
 	mountMogileFS
 };
 
 #flag that will control log verbosity
-our $VERBOSITY :shared = 0;
+our $VERBOSITY :shared = ERROR;
 
 use Fuse 0.09_4;
 use MogileFS::Client::FilePaths;
@@ -139,7 +143,6 @@ sub get_file_info($) {
 	return $finfo;
 }
 
-
 #function that will output a log message
 sub logmsg($$) {
 	my ($level, $msg) = @_;
@@ -164,7 +167,7 @@ sub sanitize_path($) {
 sub e_getattr($) {
 	my ($path) = @_;
 	$path = sanitize_path($path);
-	logmsg(1, "e_getattr: $path");
+	logmsg(DEBUG, "e_getattr: $path");
 
 	# short-circuit if the file doesn't exist
 	my $finfo = get_file_info($path);
@@ -204,7 +207,7 @@ sub e_getattr($) {
 sub e_getdir($) {
 	my ($path) = @_;
 	$path = sanitize_path($path);
-	logmsg(1, "e_getdir: $path");
+	logmsg(DEBUG, "e_getdir: $path");
 
 	#fetch all the files in the specified directory
 	my @files = eval {
@@ -229,7 +232,7 @@ sub e_listxattr($) {
 sub e_mknod($) {
 	my ($path) = @_;
 	$path = sanitize_path($path);
-	logmsg(1, "e_mknod: $path");
+	logmsg(DEBUG, "e_mknod: $path");
 
 	#attempt creating an empty file
 	my $mogc = MogileFS();
@@ -241,7 +244,7 @@ sub e_mknod($) {
 			$errcode = $mogc->errcode || -1;
 			$errstr = $mogc->errstr || '';
 		}
-		logmsg(0, "Error creating file: $errcode: $errstr");
+		logmsg(ERROR, "Error creating file: $errcode: $errstr");
 		$! = $errstr;
 		$? = $errcode;
 		return -EIO();
@@ -254,7 +257,7 @@ sub e_mknod($) {
 sub e_open($$) {
 	my ($path, $flags) = @_;
 	$path = sanitize_path($path);
-	logmsg(1, "e_open: $path, $flags");
+	logmsg(DEBUG, "e_open: $path, $flags");
 
 	#create a new file handle
 	my $file = shared_clone({});
@@ -274,7 +277,7 @@ sub e_rename {
 	my ($old, $new) = @_;
 	$old = sanitize_path($old);
 	$new = sanitize_path($new);
-	logmsg(1, "e_rename: $old -> $new");
+	logmsg(DEBUG, "e_rename: $old -> $new");
 
 	#attempt renaming the specified file
 	my $mogc = MogileFS();
@@ -286,7 +289,7 @@ sub e_rename {
 			$errcode = $mogc->errcode || -1;
 			$errstr = $mogc->errstr || '';
 		}
-		logmsg(0, "Error renaming file: $errcode: $errstr");
+		logmsg(ERROR, "Error renaming file: $errcode: $errstr");
 		$! = $errstr;
 		$? = $errcode;
 		return -EIO();
@@ -300,7 +303,7 @@ sub e_rename {
 sub e_unlink($) {
 	my ($path) = @_;
 	$path = sanitize_path($path);
-	logmsg(1, "e_unlink: $path");
+	logmsg(DEBUG, "e_unlink: $path");
 
 	#attempt deleting the specified file
 	my $mogc = MogileFS();
@@ -312,7 +315,7 @@ sub e_unlink($) {
 			$errcode = $mogc->errcode || -1;
 			$errstr = $mogc->errstr || '';
 		}
-		logmsg(0, "Error unlinking file: $errcode: $errstr");
+		logmsg(ERROR, "Error unlinking file: $errcode: $errstr");
 		$! = $errstr;
 		$? = $errcode;
 		return -EIO();
