@@ -90,6 +90,7 @@ sub mount(%) {
 		'listxattr'   => __PACKAGE__ . '::e_listxattr',
 		'mknod'       => __PACKAGE__ . '::e_mknod',
 		'open'        => __PACKAGE__ . '::e_open',
+		'readlink'    => __PACKAGE__ . '::e_readlink',
 		'rename'      => __PACKAGE__ . '::e_rename',
 		'symlink'     => __PACKAGE__ . '::e_symlink',
 		'unlink'      => __PACKAGE__ . '::e_unlink',
@@ -282,6 +283,11 @@ sub e_open($$) {
 	}
 
 	#return success
+	return 0;
+}
+
+sub e_readlink($) {
+	logmsg(DEBUG, "e_readlink: $_[0]");
 	return 0;
 }
 
