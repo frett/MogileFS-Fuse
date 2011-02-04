@@ -75,6 +75,7 @@ sub mount(%) {
 
 		#callback functions
 		'getattr'     => __PACKAGE__ . '::e_getattr',
+		'getdir'      => __PACKAGE__ . '::e_getdir',
 		'getxattr'    => __PACKAGE__ . '::e_getxattr',
 		'listxattr'   => __PACKAGE__ . '::e_listxattr',
 		'mknod'       => __PACKAGE__ . '::e_mknod',
@@ -196,6 +197,21 @@ sub e_getattr($) {
 		$blksize,
 		$blocks,
 	);
+}
+
+sub e_getdir($) {
+	my ($path) = @_;
+	$path = sanitize_path($path);
+	logmsg(1, "e_getdir: $path");
+
+	#fetch all the files in the specified directory
+	my @files = eval {
+		my $mogc = MogileFS();
+		return $mogc->list($path);
+	};
+
+	#return this directory listing
+	return ('.', '..', map {$_->{'name'}} @files), 0;
 }
 
 sub e_getxattr($$) {
