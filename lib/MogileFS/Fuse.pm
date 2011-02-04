@@ -91,6 +91,7 @@ sub mount(%) {
 		'mknod'       => __PACKAGE__ . '::e_mknod',
 		'open'        => __PACKAGE__ . '::e_open',
 		'readlink'    => __PACKAGE__ . '::e_readlink',
+		'removexattr' => __PACKAGE__ . '::e_removexattr',
 		'rename'      => __PACKAGE__ . '::e_rename',
 		'setxattr'    => __PACKAGE__ . '::e_setxattr',
 		'symlink'     => __PACKAGE__ . '::e_symlink',
@@ -290,6 +291,11 @@ sub e_open($$) {
 sub e_readlink($) {
 	logmsg(DEBUG, "e_readlink: $_[0]");
 	return 0;
+}
+
+sub e_removexattr($$) {
+	logmsg(DEBUG, "e_removexattr: $_[0]: $_[1]");
+	return -EOPNOTSUPP();
 }
 
 sub e_rename {
