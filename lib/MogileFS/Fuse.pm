@@ -74,9 +74,10 @@ sub mount(%) {
 		'threaded' => 1,
 
 		#callback functions
-		'getattr' => __PACKAGE__ . '::e_getattr',
-		'mknod'   => __PACKAGE__ . '::e_mknod',
-		'open'    => __PACKAGE__ . '::e_open',
+		'getattr'     => __PACKAGE__ . '::e_getattr',
+		'listxattr'   => __PACKAGE__ . '::e_listxattr',
+		'mknod'       => __PACKAGE__ . '::e_mknod',
+		'open'        => __PACKAGE__ . '::e_open',
 	);
 
 	#reset static variables
@@ -194,6 +195,11 @@ sub e_getattr($) {
 		$blksize,
 		$blocks,
 	);
+}
+
+sub e_listxattr($) {
+	logmsg(1, "e_listxattr: $_[0]");
+	return 0;
 }
 
 sub e_mknod($) {
