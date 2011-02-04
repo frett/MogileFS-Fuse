@@ -21,7 +21,12 @@ our $VERBOSITY :shared = ERROR;
 use Fuse 0.09_4;
 use MogileFS::Client::FilePaths;
 use Params::Validate qw{validate ARRAYREF SCALAR};
-use POSIX qw{EIO ENOENT EEXIST};
+use POSIX qw{
+	EEXIST
+	EIO
+	ENOENT
+	EOPNOTSUPP
+};
 
 ##Private static variables
 
@@ -220,13 +225,13 @@ sub e_getdir($) {
 }
 
 sub e_getxattr($$) {
-	logmsg(1, "e_getxattr: $_[0]: $_[1]");
-	return 0;
+	logmsg(DEBUG, "e_getxattr: $_[0]: $_[1]");
+	return -EOPNOTSUPP();
 }
 
 sub e_listxattr($) {
-	logmsg(1, "e_listxattr: $_[0]");
-	return 0;
+	logmsg(DEBUG, "e_listxattr: $_[0]");
+	return -EOPNOTSUPP();
 }
 
 sub e_mknod($) {
