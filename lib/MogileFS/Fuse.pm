@@ -17,7 +17,7 @@ our $VERBOSITY :shared = 0;
 use Fuse 0.09_4;
 use MogileFS::Client::FilePaths;
 use Params::Validate qw{validate ARRAYREF SCALAR};
-use POSIX qw{ENOENT};
+use POSIX qw{EIO ENOENT EEXIST};
 
 ##Private static variables
 
@@ -80,6 +80,7 @@ sub mount(%) {
 		'listxattr'   => __PACKAGE__ . '::e_listxattr',
 		'mknod'       => __PACKAGE__ . '::e_mknod',
 		'open'        => __PACKAGE__ . '::e_open',
+		'rename'      => __PACKAGE__ . '::e_rename',
 	);
 
 	#reset static variables
@@ -263,6 +264,33 @@ sub e_open($$) {
 		$files{$nextfile} = $file;
 		$nextfile++;
 	}
+
+	#return success
+	return 0;
+}
+
+sub e_rename {
+	my ($old, $new) = @_;
+	$old = sanitize_path($old);
+	$new = sanitize_path($new);
+	logmsg(1, "e_rename: $old -> $new");
+
+	#attempt renaming the specified file
+	my $mogc = MogileFS();
+	my ($errcode, $errstr) = (-1, '');
+	my $response = eval {$mogc->rename($old, $new)};
+	if($@) {
+		#set the error code and string if we have a MogileFS::Client object
+		if($mogc) {
+			$errcode = $mogc->errcode || -1;
+			$errstr = $mogc->errstr || '';
+		}
+		logmsg(0, "Error renaming file: $errcode: $errstr");
+		$! = $errstr;
+		$? = $errcode;
+		return -EIO();
+	}
+	return -EEXIST() if(!$response);
 
 	#return success
 	return 0;
