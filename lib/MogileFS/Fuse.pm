@@ -298,11 +298,14 @@ sub e_rename {
 	$new = sanitize_path($new);
 	logmsg(DEBUG, "e_rename: $old -> $new");
 
+	#throw an error if the new file already exists
+	return -EEXIST() if(defined get_file_info($new));
+
 	#attempt renaming the specified file
 	my $mogc = MogileFS();
 	my ($errcode, $errstr) = (-1, '');
 	my $response = eval {$mogc->rename($old, $new)};
-	if($@) {
+	if($@ || !$response) {
 		#set the error code and string if we have a MogileFS::Client object
 		if($mogc) {
 			$errcode = $mogc->errcode || -1;
@@ -313,7 +316,6 @@ sub e_rename {
 		$? = $errcode;
 		return -EIO();
 	}
-	return -EEXIST() if(!$response);
 
 	#return success
 	return 0;
