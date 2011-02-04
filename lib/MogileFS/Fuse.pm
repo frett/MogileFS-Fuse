@@ -94,6 +94,7 @@ sub mount(%) {
 		'removexattr' => __PACKAGE__ . '::e_removexattr',
 		'rename'      => __PACKAGE__ . '::e_rename',
 		'setxattr'    => __PACKAGE__ . '::e_setxattr',
+		'statfs'      => __PACKAGE__ . '::e_statfs',
 		'symlink'     => __PACKAGE__ . '::e_symlink',
 		'unlink'      => __PACKAGE__ . '::e_unlink',
 	);
@@ -330,6 +331,11 @@ sub e_rename {
 sub e_setxattr($$$) {
 	logmsg(DEBUG, "e_setxattr: $_[0]: $_[1] => $_[2]");
 	return -EOPNOTSUPP();
+}
+
+sub e_statfs() {
+	logmsg(DEBUG, "e_statfs");
+	return 255, 1, 1, 1, 1, 1024;
 }
 
 sub e_symlink($$) {
