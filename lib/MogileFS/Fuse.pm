@@ -75,6 +75,7 @@ sub mount(%) {
 
 		#callback functions
 		'getattr'     => __PACKAGE__ . '::e_getattr',
+		'getxattr'    => __PACKAGE__ . '::e_getxattr',
 		'listxattr'   => __PACKAGE__ . '::e_listxattr',
 		'mknod'       => __PACKAGE__ . '::e_mknod',
 		'open'        => __PACKAGE__ . '::e_open',
@@ -195,6 +196,11 @@ sub e_getattr($) {
 		$blksize,
 		$blocks,
 	);
+}
+
+sub e_getxattr($$) {
+	logmsg(1, "e_getxattr: $_[0]: $_[1]");
+	return 0;
 }
 
 sub e_listxattr($) {
