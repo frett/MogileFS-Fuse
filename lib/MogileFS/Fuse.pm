@@ -81,6 +81,7 @@ sub mount(%) {
 		'mknod'       => __PACKAGE__ . '::e_mknod',
 		'open'        => __PACKAGE__ . '::e_open',
 		'rename'      => __PACKAGE__ . '::e_rename',
+		'unlink'      => __PACKAGE__ . '::e_unlink',
 	);
 
 	#reset static variables
@@ -291,6 +292,31 @@ sub e_rename {
 		return -EIO();
 	}
 	return -EEXIST() if(!$response);
+
+	#return success
+	return 0;
+}
+
+sub e_unlink($) {
+	my ($path) = @_;
+	$path = sanitize_path($path);
+	logmsg(1, "e_unlink: $path");
+
+	#attempt deleting the specified file
+	my $mogc = MogileFS();
+	my ($errcode, $errstr) = (-1, '');
+	eval {$mogc->delete($path)};
+	if($@) {
+		#set the error code and string if we have a MogileFS::Client object
+		if($mogc) {
+			$errcode = $mogc->errcode || -1;
+			$errstr = $mogc->errstr || '';
+		}
+		logmsg(0, "Error unlinking file: $errcode: $errstr");
+		$! = $errstr;
+		$? = $errcode;
+		return -EIO();
+	}
 
 	#return success
 	return 0;
