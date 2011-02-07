@@ -197,6 +197,18 @@ sub mount {
 	return;
 }
 
+sub sanitize_path {
+	my $self = shift;
+	my ($path) = @_;
+
+	# Make sure we start everything from '/'
+	$path = '/' unless(length($path));
+	$path = '/' if($path eq '.');
+	$path = '/' . $path unless($path =~ m!^/!so);
+
+	return $path;
+}
+
 ##Support Functions
 
 #function that will return a MogileFS client for the current config
@@ -249,17 +261,6 @@ sub logmsg($$) {
 	return if($level > $VERBOSITY);
 
 	print STDERR $msg, "\n";
-}
-
-sub sanitize_path($) {
-	my ($path) = @_;
-
-	# Make sure we start everything from '/'
-	$path = '/' unless(length($path));
-	$path = '/' if($path eq '.');
-	$path = '/' . $path unless($path =~ m!^/!so);
-
-	return $path;
 }
 
 ##Callback Functions
