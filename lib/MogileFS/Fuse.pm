@@ -29,7 +29,10 @@ my %config :shared;
 
 #state variables
 my $mounted :shared;
+
+#variables to track unshared instance objects
 my $instance :shared = 0;
+my %unshared;
 
 #objects used for Fuse binding
 my $mogc;
@@ -38,11 +41,54 @@ my $mogc;
 my %files :shared;
 my $nextfile :shared = 1;
 
-#Function to mount the specified MogileFS domain to the filesystem
+##Static Methods
+
+#constructor
 #	class      => the class to store files as in MogileFS
 #	domain     => the domain to use in MogileFS
 #	mountpoint => where to mount the filesystem
 #	trackers   => the addresses for the MogileFS trackers
+sub new {
+	#create the new MogileFS::Fuse object
+	my $self = shift;
+	$self = shared_clone(bless({}, ref($self) || $self));
+
+	#initialize and return the new object
+	return $self->_init(@_);
+}
+
+##Instance Methods
+
+#method that will initialize the MogileFS::Fuse object
+sub _init {
+	my $self = shift;
+	my %opt = validate(@_, {
+		'class'      => {'type' => SCALAR, 'default' => undef},
+		'domain'     => {'type' => SCALAR},
+		'mountpoint' => {'type' => SCALAR},
+		'trackers'   => {'type' => ARRAYREF},
+	});
+
+	#set the instance id
+	{
+		lock($instance);
+		$self->{'id'} = $instance;
+		$instance++;
+	}
+
+	#process the MogileFS config
+	$self->{'config'} = shared_clone({
+		'mountpoint' => $opt{'mountpoint'},
+		'class'  => $opt{'class'},
+		'domain' => $opt{'domain'},
+		'trackers' => $opt{'trackers'},
+	});
+
+	#return the initialized object
+	return $self;
+}
+
+#Function to mount the specified MogileFS domain to the filesystem
 sub mount(%) {
 	my %opt = validate(@_, {
 		'class'      => {'type' => SCALAR, 'default' => undef},
