@@ -10,9 +10,6 @@ use threads::shared;
 use constant ERROR => 0;
 use constant DEBUG => 1;
 
-#flag that will control log verbosity
-our $VERBOSITY :shared = ERROR;
-
 our @EXPORT_OK = qw{
 	ERROR
 	DEBUG
@@ -58,6 +55,7 @@ my $nextfile :shared = 1;
 #constructor
 #	class      => the class to store files as in MogileFS
 #	domain     => the domain to use in MogileFS
+#	loglevel   => the log level to use for output
 #	mountpoint => where to mount the filesystem
 #	trackers   => the addresses for the MogileFS trackers
 sub new {
@@ -77,6 +75,7 @@ sub _init {
 	my %opt = validate(@_, {
 		'class'      => {'type' => SCALAR, 'default' => undef},
 		'domain'     => {'type' => SCALAR},
+		'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
 		'mountpoint' => {'type' => SCALAR},
 		'trackers'   => {'type' => ARRAYREF},
 	});
@@ -93,10 +92,11 @@ sub _init {
 
 	#process the MogileFS config
 	$self->{'config'} = shared_clone({
+		'loglevel'   => $opt{'loglevel'},
 		'mountpoint' => $opt{'mountpoint'},
-		'class'  => $opt{'class'},
-		'domain' => $opt{'domain'},
-		'trackers' => $opt{'trackers'},
+		'class'      => $opt{'class'},
+		'domain'     => $opt{'domain'},
+		'trackers'   => $opt{'trackers'},
 	});
 
 	#return the initialized object
@@ -138,7 +138,7 @@ sub id {
 sub log {
 	my $self = shift;
 	my ($level, $msg) = @_;
-	return if($level > $VERBOSITY);
+	return if($level > $self->{'config'}->{'loglevel'});
 	print STDERR $msg, "\n";
 }
 
