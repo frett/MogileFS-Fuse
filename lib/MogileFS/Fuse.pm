@@ -184,7 +184,10 @@ sub mount {
 			$self->log(DEBUG, "e_symlink: $_[0] $_[1]");
 			$self->e_symlink(@_);
 		},
-		'unlink'      => __PACKAGE__ . '::e_unlink',
+		'unlink'      => sub {
+			$self->log(DEBUG, "e_unlink: $_[0]");
+			$self->e_unlink(@_);
+		},
 	);
 
 	#reset mounted state
@@ -425,13 +428,13 @@ sub e_symlink {
 	return -EOPNOTSUPP();
 }
 
-sub e_unlink($) {
+sub e_unlink {
+	my $self = shift;
 	my ($path) = @_;
-	$path = sanitize_path($path);
-	logmsg(DEBUG, "e_unlink: $path");
+	$path = $self->sanitize_path($path);
 
 	#attempt deleting the specified file
-	my $mogc = MogileFS();
+	my $mogc = $self->client();
 	my ($errcode, $errstr) = (-1, '');
 	eval {$mogc->delete($path)};
 	if($@) {
@@ -440,7 +443,7 @@ sub e_unlink($) {
 			$errcode = $mogc->errcode || -1;
 			$errstr = $mogc->errstr || '';
 		}
-		logmsg(ERROR, "Error unlinking file: $errcode: $errstr");
+		$self->log(ERROR, "Error unlinking file: $errcode: $errstr");
 		$! = $errstr;
 		$? = $errcode;
 		return -EIO();
