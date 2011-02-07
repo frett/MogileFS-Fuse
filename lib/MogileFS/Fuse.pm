@@ -6,6 +6,11 @@ use base qw{Exporter};
 use threads;
 use threads::shared;
 
+use Fuse 0.09_4;
+use MogileFS::Client;
+use Params::Validate qw{validate ARRAYREF SCALAR};
+use POSIX qw{EEXIST EIO ENOENT EOPNOTSUPP};
+
 #log levels
 use constant ERROR => 0;
 use constant DEBUG => 1;
@@ -21,34 +26,11 @@ our %EXPORT_TAGS = (
 	}],
 );
 
-use Fuse 0.09_4;
-use MogileFS::Client;
-use Params::Validate qw{validate ARRAYREF SCALAR};
-use POSIX qw{
-	EEXIST
-	EIO
-	ENOENT
-	EOPNOTSUPP
-};
-
 ##Private static variables
 
-#MogileFS configuration
-my %config :shared;
-
-#state variables
-my $mounted :shared;
-
-#variables to track unshared instance objects
+#variables to track the currently mounted Fuse object
 my $instance :shared = 1;
 my %unshared;
-
-#objects used for Fuse binding
-my $mogc;
-
-#file objects
-my %files :shared;
-my $nextfile :shared = 1;
 
 ##Static Methods
 
@@ -118,9 +100,10 @@ sub client {
 
 	#create and store a new client if one doesn't exist already
 	if(!defined $client) {
+		my $config = $_[0]->{'config'};
 		$client = MogileFS::Client->new(
-			'hosts'  => [@{$config{'trackers'}}],
-			'domain' => $config{'domain'},
+			'hosts'  => [@{$config->{'trackers'}}],
+			'domain' => $config->{'domain'},
 		);
 		$_[0]->_localElem('client', $client);
 	}
@@ -155,7 +138,7 @@ sub mount {
 
 	#mount the MogileFS file system
 	Fuse::main(
-		'mountpoint' => $self->{'mountpoint'},
+		'mountpoint' => $self->{'config'}->{'mountpoint'},
 		'threaded' => 1,
 
 		#callback functions
@@ -236,31 +219,6 @@ sub sanitize_path {
 	return $path;
 }
 
-##Support Functions
-
-#function that will return a MogileFS client for the current config
-sub MogileFS() {
-	if(ref($mogc) ne 'HASH' || $mogc->{'version'} != $instance) {
-		$mogc = {
-			'client'  => MogileFS::Client::FilePaths->new(
-				'hosts'  => [@{$config{'trackers'}}],
-				'domain' => $config{'domain'},
-			),
-			'version' => $instance,
-		};
-	}
-
-	return $mogc->{'client'};
-}
-
-#function that will output a log message
-sub logmsg($$) {
-	my ($level, $msg) = @_;
-	return if($level > $VERBOSITY);
-
-	print STDERR $msg, "\n";
-}
-
 ##Callback Functions
 
 sub e_getattr {
@@ -291,7 +249,7 @@ sub e_mknod {
 	#attempt creating an empty file
 	my $mogc = $self->client();
 	my ($errcode, $errstr) = (-1, '');
-	my $response = eval {$mogc->new_file($path, $config{'class'})->close};
+	my $response = eval {$mogc->new_file($path, $self->{'config'}->{'class'})->close};
 	if($@ || !$response) {
 		#set the error code and string if we have a MogileFS::Client object
 		if($mogc) {
@@ -302,25 +260,6 @@ sub e_mknod {
 		$! = $errstr;
 		$? = $errcode;
 		return -EIO();
-	}
-
-	#return success
-	return 0;
-}
-
-sub e_open($$) {
-	my ($path, $flags) = @_;
-	$path = sanitize_path($path);
-	logmsg(DEBUG, "e_open: $path, $flags");
-
-	#create a new file handle
-	my $file = shared_clone({});
-
-	#store the new file in the opened files hash
-	{
-		lock($nextfile);
-		$files{$nextfile} = $file;
-		$nextfile++;
 	}
 
 	#return success

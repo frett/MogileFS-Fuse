@@ -16,9 +16,10 @@ sub client {
 
 	#create and store a new client if one doesn't exist already
 	if(!defined $client) {
+		my $config = $_[0]->{'config'};
 		$client = MogileFS::Client::FilePaths->new(
-			'hosts'  => [@{$config{'trackers'}}],
-			'domain' => $config{'domain'},
+			'hosts'  => [@{$config->{'trackers'}}],
+			'domain' => $config->{'domain'},
 		);
 		$_[0]->_localElem('client', $client);
 	}
