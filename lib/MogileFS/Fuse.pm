@@ -163,7 +163,10 @@ sub mount {
 			$self->log(DEBUG, "e_getattr: $_[0]");
 			$self->e_getattr(@_);
 		},
-		'getdir'      => __PACKAGE__ . '::e_getdir',
+		'getdir'      => sub {
+			$self->log(DEBUG, "e_getdir: $_[0]");
+			$self->e_getdir(@_);
+		},
 		'getxattr'    => sub {
 			$self->log(DEBUG, "e_getxattr: $_[0]: $_[1]");
 			$self->e_getxattr(@_);
@@ -264,19 +267,8 @@ sub e_getattr {
 	return -EOPNOTSUPP();
 }
 
-sub e_getdir($) {
-	my ($path) = @_;
-	$path = sanitize_path($path);
-	logmsg(DEBUG, "e_getdir: $path");
-
-	#fetch all the files in the specified directory
-	my @files = eval {
-		my $mogc = MogileFS();
-		return $mogc->list($path);
-	};
-
-	#return this directory listing
-	return ('.', '..', map {$_->{'name'}} @files), 0;
+sub e_getdir {
+	return -EOPNOTSUPP();
 }
 
 sub e_getxattr {

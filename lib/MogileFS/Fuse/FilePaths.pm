@@ -99,6 +99,20 @@ sub e_getattr {
 	);
 }
 
+sub e_getdir {
+	my $self = shift;
+	my ($path) = @_;
+	$path = $self->sanitize_path($path);
+
+	#fetch all the files in the specified directory
+	my @files = eval {
+		return $self->client()->list($path);
+	};
+
+	#return this directory listing
+	return ('.', '..', map {$_->{'name'}} @files), 0;
+}
+
 sub e_rename {
 	my $self = shift;
 	my ($old, $new) = @_;
