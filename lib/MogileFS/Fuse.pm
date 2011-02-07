@@ -122,6 +122,14 @@ sub id {
 	return $_[0]->{'id'};
 }
 
+#function that will output a log message
+sub log {
+	my $self = shift;
+	my ($level, $msg) = @_;
+	return if($level > $VERBOSITY);
+	print STDERR $msg, "\n";
+}
+
 #Method to mount the specified MogileFS domain to the filesystem
 sub mount {
 	my $self = shift;
@@ -150,7 +158,10 @@ sub mount {
 		'removexattr' => __PACKAGE__ . '::e_removexattr',
 		'rename'      => __PACKAGE__ . '::e_rename',
 		'setxattr'    => __PACKAGE__ . '::e_setxattr',
-		'statfs'      => __PACKAGE__ . '::e_statfs',
+		'statfs'      => sub {
+			$self->log(DEBUG, 'e_statfs');
+			$self->e_statfs(@_);
+		},
 		'symlink'     => __PACKAGE__ . '::e_symlink',
 		'unlink'      => __PACKAGE__ . '::e_unlink',
 	);
@@ -390,8 +401,7 @@ sub e_setxattr($$$) {
 	return -EOPNOTSUPP();
 }
 
-sub e_statfs() {
-	logmsg(DEBUG, "e_statfs");
+sub e_statfs {
 	return 255, 1, 1, 1, 1, 1024;
 }
 
