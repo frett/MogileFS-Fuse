@@ -13,7 +13,7 @@ use constant DEBUG => 1;
 our $VERBOSITY :shared = ERROR;
 
 use Fuse 0.09_4;
-use MogileFS::Client::FilePaths;
+use MogileFS::Client;
 use Params::Validate qw{validate ARRAYREF SCALAR};
 use POSIX qw{
 	EEXIST
@@ -86,6 +86,37 @@ sub _init {
 
 	#return the initialized object
 	return $self;
+}
+
+#method that will access unshared object elements
+sub _localElem {
+	my $self = ($unshared{shift->id} ||= {});
+	my $elem = shift;
+	my $old = $self->{$elem};
+	$self->{$elem} = $_[0] if(@_);
+	return $old;
+}
+
+#method that will return a MogileFS object
+sub client {
+	my $client = $_[0]->_localElem('client');
+
+	#create and store a new client if one doesn't exist already
+	if(!defined $client) {
+		$client = MogileFS::Client->new(
+			'hosts'  => [@{$config{'trackers'}}],
+			'domain' => $config{'domain'},
+		);
+		$_[0]->_localElem('client', $client);
+	}
+
+	#return the MogileFS client
+	return $client;
+}
+
+#return the instance id for this object
+sub id {
+	return $_[0]->{'id'};
 }
 
 #Function to mount the specified MogileFS domain to the filesystem
