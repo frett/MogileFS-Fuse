@@ -3,12 +3,11 @@ package MogileFS::Fuse;
 use strict;
 use utf8;
 use base qw{Exporter};
-use threads;
 use threads::shared;
 
 use Fuse 0.09_4;
 use MogileFS::Client;
-use Params::Validate qw{validate ARRAYREF SCALAR};
+use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR};
 use POSIX qw{EEXIST EIO ENOENT EOPNOTSUPP};
 
 #log levels
@@ -39,6 +38,7 @@ my %unshared;
 #	domain     => the domain to use in MogileFS
 #	loglevel   => the log level to use for output
 #	mountpoint => where to mount the filesystem
+#	threaded   => flag indicating if this MogileFS file system should be threaded or not
 #	trackers   => the addresses for the MogileFS trackers
 sub new {
 	#create the new MogileFS::Fuse object
@@ -59,11 +59,15 @@ sub _init {
 		'domain'     => {'type' => SCALAR},
 		'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
 		'mountpoint' => {'type' => SCALAR},
+		'threaded'   => {'type' => BOOLEAN, 'default' => $threads::threads},
 		'trackers'   => {'type' => ARRAYREF},
 	});
 
 	#die horribly if we are trying to reinit an existing object
 	die 'You are trying to reinitialize an existing MogileFS::Fuse object, this could introduce race conditions and is unsupported' if($self->{'id'});
+
+	#disable threads if they aren't loaded
+	$opt{'threaded'} = 0 if(!$threads::threads);
 
 	#set the instance id
 	{
@@ -72,14 +76,8 @@ sub _init {
 		$instance++;
 	}
 
-	#process the MogileFS config
-	$self->{'config'} = shared_clone({
-		'loglevel'   => $opt{'loglevel'},
-		'mountpoint' => $opt{'mountpoint'},
-		'class'      => $opt{'class'},
-		'domain'     => $opt{'domain'},
-		'trackers'   => $opt{'trackers'},
-	});
+	#store the MogileFS config
+	$self->{'config'} = shared_clone({%opt});
 
 	#return the initialized object
 	return $self;
@@ -139,7 +137,7 @@ sub mount {
 	#mount the MogileFS file system
 	Fuse::main(
 		'mountpoint' => $self->{'config'}->{'mountpoint'},
-		'threaded' => 1,
+		'threaded' => $self->{'config'}->{'threaded'},
 
 		#callback functions
 		'getattr'     => sub {
