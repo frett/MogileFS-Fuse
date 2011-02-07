@@ -153,14 +153,20 @@ sub mount {
 			$self->log(DEBUG, "e_getxattr: $_[0]: $_[1]");
 			$self->e_getxattr(@_);
 		},
-		'link'        => __PACKAGE__ . '::e_link',
+		'link'        => sub {
+			$self->log(DEBUG, "e_link: $_[0] $_[1]");
+			$self->e_link(@_);
+		},
 		'listxattr'   => sub {
 			$self->log(DEBUG, "e_listxattr: $_[0]");
 			$self->e_listxattr(@_);
 		},
 		'mknod'       => __PACKAGE__ . '::e_mknod',
 		'open'        => __PACKAGE__ . '::e_open',
-		'readlink'    => __PACKAGE__ . '::e_readlink',
+		'readlink'    => sub {
+			$self->log(DEBUG, "e_readlink: $_[0]");
+			$self->e_readlink(@_);
+		},
 		'removexattr' => sub {
 			$self->log(DEBUG, "e_removexattr: $_[0]: $_[1]");
 			$self->e_removexattr(@_);
@@ -174,7 +180,10 @@ sub mount {
 			$self->log(DEBUG, 'e_statfs');
 			$self->e_statfs(@_);
 		},
-		'symlink'     => __PACKAGE__ . '::e_symlink',
+		'symlink'     => sub {
+			$self->log(DEBUG, "e_symlink: $_[0] $_[1]");
+			$self->e_symlink(@_);
+		},
 		'unlink'      => __PACKAGE__ . '::e_unlink',
 	);
 
@@ -314,8 +323,7 @@ sub e_getxattr {
 	return -EOPNOTSUPP();
 }
 
-sub e_link($$) {
-	logmsg(DEBUG, "e_link: $_[0] $_[1]");
+sub e_link {
 	return -EOPNOTSUPP();
 }
 
@@ -367,8 +375,7 @@ sub e_open($$) {
 	return 0;
 }
 
-sub e_readlink($) {
-	logmsg(DEBUG, "e_readlink: $_[0]");
+sub e_readlink {
 	return 0;
 }
 
@@ -413,8 +420,7 @@ sub e_statfs {
 	return 255, 1, 1, 1, 1, 1024;
 }
 
-sub e_symlink($$) {
-	logmsg(DEBUG, "e_symlink: $_[0] $_[1]");
+sub e_symlink {
 	return -EOPNOTSUPP();
 }
 
