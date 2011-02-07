@@ -6,7 +6,7 @@ use base qw{MogileFS::Fuse};
 
 use MogileFS::Client::FilePaths;
 use MogileFS::Fuse qw{:LEVELS};
-use POSIX qw{EEXIST EIO};
+use POSIX qw{EEXIST EIO ENOENT};
 
 ##Instance Methods
 
@@ -58,6 +58,46 @@ sub get_file_info($) {
 }
 
 ##Fuse callbacks
+
+sub e_getattr {
+	my $self = shift;
+	my ($path) = @_;
+	$path = $self->sanitize_path($path);
+
+	# short-circuit if the file doesn't exist
+	my $finfo = $self->get_file_info($path);
+	return -ENOENT() if(!defined $finfo);
+
+	# Cook some permissions since we don't store this information in mogile
+	#TODO: how should we set file/dir permissions?
+	my $modes =
+		$finfo->{'is_directory'} ? (0040 << 9) + 0777 :
+		(0100 << 9) + 0666;
+	my $size = $finfo->{'size'} || 0;
+
+	#set some generic attributes
+	#TODO: set more sane values for file attributes
+	my ($dev, $ino, $rdev, $blocks, $gid, $uid, $nlink, $blksize) = (0,0,0,1,0,0,1,1024);
+	my ($atime, $ctime, $mtime);
+	$atime = $ctime = $mtime = $finfo->{'mtime'} || time;
+
+	#return the attribute values
+	return (
+		$dev,
+		$ino,
+		$modes,
+		$nlink,
+		$uid,
+		$gid,
+		$rdev,
+		$size,
+		$atime,
+		$mtime,
+		$ctime,
+		$blksize,
+		$blocks,
+	);
+}
 
 sub e_rename {
 	my $self = shift;

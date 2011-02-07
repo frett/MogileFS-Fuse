@@ -159,7 +159,10 @@ sub mount {
 		'threaded' => 1,
 
 		#callback functions
-		'getattr'     => __PACKAGE__ . '::e_getattr',
+		'getattr'     => sub {
+			$self->log(DEBUG, "e_getattr: $_[0]");
+			$self->e_getattr(@_);
+		},
 		'getdir'      => __PACKAGE__ . '::e_getdir',
 		'getxattr'    => sub {
 			$self->log(DEBUG, "e_getxattr: $_[0]: $_[1]");
@@ -247,35 +250,6 @@ sub MogileFS() {
 	return $mogc->{'client'};
 }
 
-#fetch meta-data about the specified file
-sub get_file_info($) {
-	my ($path) = @_;
-
-	#short-circuit if this is the root directory
-	return {
-		'name' => '/',
-		'is_directory' => 1,
-	} if($path eq '/');
-
-	#process the specified path
-	$path =~ m!^(.*/)([^/]+)$!;
-	my ($dir, $file) = ($1, $2);
-
-	#look up meta-data for the directory containing the specified file
-	#TODO: maybe cache this lookup
-	my $finfo = eval {
-		my $mogc = MogileFS();
-		my @files = $mogc->list($dir);
-		foreach(@files) {
-			return $_ if($_->{'name'} eq $file);
-		}
-		return undef;
-	};
-
-	#return the found file info
-	return $finfo;
-}
-
 #function that will output a log message
 sub logmsg($$) {
 	my ($level, $msg) = @_;
@@ -286,44 +260,8 @@ sub logmsg($$) {
 
 ##Callback Functions
 
-sub e_getattr($) {
-	my ($path) = @_;
-	$path = sanitize_path($path);
-	logmsg(DEBUG, "e_getattr: $path");
-
-	# short-circuit if the file doesn't exist
-	my $finfo = get_file_info($path);
-	return -ENOENT() if(!defined $finfo);
-
-	# Cook some permissions since we don't store this information in mogile
-	#TODO: how should we set file/dir permissions?
-	my $modes =
-		$finfo->{'is_directory'} ? (0040 << 9) + 0777 :
-		(0100 << 9) + 0666;
-	my $size = $finfo->{'size'} || 0;
-
-	#set some generic attributes
-	#TODO: set more sane values for file attributes
-	my ($dev, $ino, $rdev, $blocks, $gid, $uid, $nlink, $blksize) = (0,0,0,1,0,0,1,1024);
-	my ($atime, $ctime, $mtime);
-	$atime = $ctime = $mtime = $finfo->{'mtime'} || time;
-
-	#return the attribute values
-	return (
-		$dev,
-		$ino,
-		$modes,
-		$nlink,
-		$uid,
-		$gid,
-		$rdev,
-		$size,
-		$atime,
-		$mtime,
-		$ctime,
-		$blksize,
-		$blocks,
-	);
+sub e_getattr {
+	return -EOPNOTSUPP();
 }
 
 sub e_getdir($) {
