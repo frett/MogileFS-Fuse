@@ -149,15 +149,27 @@ sub mount {
 		#callback functions
 		'getattr'     => __PACKAGE__ . '::e_getattr',
 		'getdir'      => __PACKAGE__ . '::e_getdir',
-		'getxattr'    => __PACKAGE__ . '::e_getxattr',
+		'getxattr'    => sub {
+			$self->log(DEBUG, "e_getxattr: $_[0]: $_[1]");
+			$self->e_getxattr(@_);
+		},
 		'link'        => __PACKAGE__ . '::e_link',
-		'listxattr'   => __PACKAGE__ . '::e_listxattr',
+		'listxattr'   => sub {
+			$self->log(DEBUG, "e_listxattr: $_[0]");
+			$self->e_listxattr(@_);
+		},
 		'mknod'       => __PACKAGE__ . '::e_mknod',
 		'open'        => __PACKAGE__ . '::e_open',
 		'readlink'    => __PACKAGE__ . '::e_readlink',
-		'removexattr' => __PACKAGE__ . '::e_removexattr',
+		'removexattr' => sub {
+			$self->log(DEBUG, "e_removexattr: $_[0]: $_[1]");
+			$self->e_removexattr(@_);
+		},
 		'rename'      => __PACKAGE__ . '::e_rename',
-		'setxattr'    => __PACKAGE__ . '::e_setxattr',
+		'setxattr'    => sub {
+			$self->log(DEBUG, "e_setxattr: $_[0]: $_[1] => $_[2]");
+			$self->e_setxattr(@_);
+		},
 		'statfs'      => sub {
 			$self->log(DEBUG, 'e_statfs');
 			$self->e_statfs(@_);
@@ -298,8 +310,7 @@ sub e_getdir($) {
 	return ('.', '..', map {$_->{'name'}} @files), 0;
 }
 
-sub e_getxattr($$) {
-	logmsg(DEBUG, "e_getxattr: $_[0]: $_[1]");
+sub e_getxattr {
 	return -EOPNOTSUPP();
 }
 
@@ -308,8 +319,7 @@ sub e_link($$) {
 	return -EOPNOTSUPP();
 }
 
-sub e_listxattr($) {
-	logmsg(DEBUG, "e_listxattr: $_[0]");
+sub e_listxattr {
 	return -EOPNOTSUPP();
 }
 
@@ -362,8 +372,7 @@ sub e_readlink($) {
 	return 0;
 }
 
-sub e_removexattr($$) {
-	logmsg(DEBUG, "e_removexattr: $_[0]: $_[1]");
+sub e_removexattr {
 	return -EOPNOTSUPP();
 }
 
@@ -396,8 +405,7 @@ sub e_rename {
 	return 0;
 }
 
-sub e_setxattr($$$) {
-	logmsg(DEBUG, "e_setxattr: $_[0]: $_[1] => $_[2]");
+sub e_setxattr {
 	return -EOPNOTSUPP();
 }
 
