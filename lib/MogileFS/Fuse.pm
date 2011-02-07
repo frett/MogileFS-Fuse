@@ -31,7 +31,7 @@ my %config :shared;
 my $mounted :shared;
 
 #variables to track unshared instance objects
-my $instance :shared = 0;
+my $instance :shared = 1;
 my %unshared;
 
 #objects used for Fuse binding
@@ -68,6 +68,9 @@ sub _init {
 		'mountpoint' => {'type' => SCALAR},
 		'trackers'   => {'type' => ARRAYREF},
 	});
+
+	#die horribly if we are trying to reinit an existing object
+	die 'You are trying to reinitialize an existing MogileFS::Fuse object, this could introduce race conditions and is unsupported' if($self->{'id'});
 
 	#set the instance id
 	{
