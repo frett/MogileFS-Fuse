@@ -10,6 +10,12 @@ use MogileFS::Client;
 use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR};
 use POSIX qw{EEXIST EIO ENOENT EOPNOTSUPP};
 
+use constant CALLBACKS => qw{
+	getattr readlink getdir mknod mkdir unlink rmdir symlink
+	rename link chmod chown truncate utime open read write statfs
+	flush release fsync setxattr getxattr listxattr removexattr
+};
+
 #log levels
 use constant ERROR => 0;
 use constant DEBUG => 1;
@@ -30,6 +36,23 @@ our %EXPORT_TAGS = (
 #variables to track the currently mounted Fuse object
 my $instance :shared = 1;
 my %unshared;
+my $mountedObject :shared = undef;
+
+##Fuse callback wrappers
+#TODO: this is a hack because the Fuse library doesn't support method callbacks or coderef callbacks in threads
+BEGIN {
+	no strict "refs";
+	foreach (CALLBACKS) {
+		my $callback = __PACKAGE__ . '::_' . $_;
+		my $method = 'e_' . $_;
+
+		*$callback = sub {
+			my $self = $mountedObject;
+			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} @_) . ')') if($self->{'config'}->{'loglevel'} >= DEBUG);
+			$self->$method(@_);
+		};
+	}
+}
 
 ##Static Methods
 
@@ -127,11 +150,13 @@ sub log {
 sub mount {
 	my $self = shift;
 
-	#short-circuit if this MogileFS file system is currently mounted
+	#short-circuit if a MogileFS file system is currently mounted
 	{
 		lock($self);
-		return if($self->{'mounted'});
+		lock($mountedObject);
+		return if($self->{'mounted'} || $mountedObject);
 		$self->{'mounted'} = 1;
+		$mountedObject = $self;
 	}
 
 	#mount the MogileFS file system
@@ -140,64 +165,14 @@ sub mount {
 		'threaded' => $self->{'config'}->{'threaded'},
 
 		#callback functions
-		'getattr'     => sub {
-			$self->log(DEBUG, "e_getattr: $_[0]");
-			$self->e_getattr(@_);
-		},
-		'getdir'      => sub {
-			$self->log(DEBUG, "e_getdir: $_[0]");
-			$self->e_getdir(@_);
-		},
-		'getxattr'    => sub {
-			$self->log(DEBUG, "e_getxattr: $_[0]: $_[1]");
-			$self->e_getxattr(@_);
-		},
-		'link'        => sub {
-			$self->log(DEBUG, "e_link: $_[0] $_[1]");
-			$self->e_link(@_);
-		},
-		'listxattr'   => sub {
-			$self->log(DEBUG, "e_listxattr: $_[0]");
-			$self->e_listxattr(@_);
-		},
-		'mknod'       => sub {
-			$self->log(DEBUG, "e_mknod: $_[0]");
-			$self->e_mknod(@_);
-		},
-		'open'        => __PACKAGE__ . '::e_open',
-		'readlink'    => sub {
-			$self->log(DEBUG, "e_readlink: $_[0]");
-			$self->e_readlink(@_);
-		},
-		'removexattr' => sub {
-			$self->log(DEBUG, "e_removexattr: $_[0]: $_[1]");
-			$self->e_removexattr(@_);
-		},
-		'rename'      => sub {
-			$self->log(DEBUG, "e_rename: $_[0] -> $_[1]");
-			$self->e_rename(@_);
-		},
-		'setxattr'    => sub {
-			$self->log(DEBUG, "e_setxattr: $_[0]: $_[1] => $_[2]");
-			$self->e_setxattr(@_);
-		},
-		'statfs'      => sub {
-			$self->log(DEBUG, 'e_statfs');
-			$self->e_statfs(@_);
-		},
-		'symlink'     => sub {
-			$self->log(DEBUG, "e_symlink: $_[0] $_[1]");
-			$self->e_symlink(@_);
-		},
-		'unlink'      => sub {
-			$self->log(DEBUG, "e_unlink: $_[0]");
-			$self->e_unlink(@_);
-		},
+		map {$_ => __PACKAGE__ . '::_' . $_} CALLBACKS,
 	);
 
 	#reset mounted state
 	{
 		lock($self);
+		lock($mountedObject);
+		$mountedObject = undef;
 		$self->{'mounted'} = 0;
 	}
 
