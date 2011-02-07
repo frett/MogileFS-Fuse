@@ -2,18 +2,12 @@ package MogileFS::Fuse;
 
 use strict;
 use utf8;
-use base qw{Exporter};
 use threads;
 use threads::shared;
 
 #log levels
 use constant ERROR => 0;
 use constant DEBUG => 1;
-
-#list of functions available for export
-our @EXPORT_OK = qw{
-	mountMogileFS
-};
 
 #flag that will control log verbosity
 our $VERBOSITY :shared = ERROR;
@@ -106,7 +100,6 @@ sub mount(%) {
 	#return
 	return;
 }
-*mountMogileFS = *mount;
 
 ##Support Functions
 
