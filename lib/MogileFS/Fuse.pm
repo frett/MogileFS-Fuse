@@ -119,38 +119,20 @@ sub id {
 	return $_[0]->{'id'};
 }
 
-#Function to mount the specified MogileFS domain to the filesystem
-sub mount(%) {
-	my %opt = validate(@_, {
-		'class'      => {'type' => SCALAR, 'default' => undef},
-		'domain'     => {'type' => SCALAR},
-		'mountpoint' => {'type' => SCALAR},
-		'trackers'   => {'type' => ARRAYREF},
-	});
+#Method to mount the specified MogileFS domain to the filesystem
+sub mount {
+	my $self = shift;
 
-	#short-circuit if a MogileFS file system was already mounted
+	#short-circuit if this MogileFS file system is currently mounted
 	{
-		lock($mounted);
-		return if($mounted);
-		$mounted = 1;
-	}
-
-	#process the MogileFS config
-	$config{'mountpoint'} = $opt{'mountpoint'};
-	$config{'class'} = $opt{'class'};
-	$config{'domain'} = $opt{'domain'};
-	$config{'trackers'} = shared_clone([]);
-	push @{$config{'trackers'}}, @{$opt{'trackers'}};
-
-	#increment the instance id of this mount
-	{
-		lock($instance);
-		$instance++;
+		lock($self);
+		return if($self->{'mounted'});
+		$self->{'mounted'} = 1;
 	}
 
 	#mount the MogileFS file system
 	Fuse::main(
-		'mountpoint' => $config{'mountpoint'},
+		'mountpoint' => $self->{'mountpoint'},
 		'threaded' => 1,
 
 		#callback functions
@@ -170,9 +152,11 @@ sub mount(%) {
 		'unlink'      => __PACKAGE__ . '::e_unlink',
 	);
 
-	#reset static variables
-	%config = ();
-	$mounted = 0;
+	#reset mounted state
+	{
+		lock($self);
+		$self->{'mounted'} = 0;
+	}
 
 	#return
 	return;
