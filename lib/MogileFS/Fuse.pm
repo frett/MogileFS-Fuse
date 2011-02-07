@@ -161,7 +161,10 @@ sub mount {
 			$self->log(DEBUG, "e_listxattr: $_[0]");
 			$self->e_listxattr(@_);
 		},
-		'mknod'       => __PACKAGE__ . '::e_mknod',
+		'mknod'       => sub {
+			$self->log(DEBUG, "e_mknod: $_[0]");
+			$self->e_mknod(@_);
+		},
 		'open'        => __PACKAGE__ . '::e_open',
 		'readlink'    => sub {
 			$self->log(DEBUG, "e_readlink: $_[0]");
@@ -335,13 +338,13 @@ sub e_listxattr {
 	return -EOPNOTSUPP();
 }
 
-sub e_mknod($) {
+sub e_mknod {
+	my $self = shift;
 	my ($path) = @_;
-	$path = sanitize_path($path);
-	logmsg(DEBUG, "e_mknod: $path");
+	$path = $self->sanitize_path($path);
 
 	#attempt creating an empty file
-	my $mogc = MogileFS();
+	my $mogc = $self->client();
 	my ($errcode, $errstr) = (-1, '');
 	my $response = eval {$mogc->new_file($path, $config{'class'})->close};
 	if($@ || !$response) {
@@ -350,7 +353,7 @@ sub e_mknod($) {
 			$errcode = $mogc->errcode || -1;
 			$errstr = $mogc->errstr || '';
 		}
-		logmsg(ERROR, "Error creating file: $errcode: $errstr");
+		$self->log(ERROR, "Error creating file: $errcode: $errstr");
 		$! = $errstr;
 		$? = $errcode;
 		return -EIO();
