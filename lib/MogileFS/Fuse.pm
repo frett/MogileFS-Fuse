@@ -2,6 +2,7 @@ package MogileFS::Fuse;
 
 use strict;
 use utf8;
+use base qw{Exporter};
 use threads;
 use threads::shared;
 
@@ -11,6 +12,17 @@ use constant DEBUG => 1;
 
 #flag that will control log verbosity
 our $VERBOSITY :shared = ERROR;
+
+our @EXPORT_OK = qw{
+	ERROR
+	DEBUG
+};
+our %EXPORT_TAGS = (
+	LEVELS => [qw{
+		ERROR
+		DEBUG
+	}],
+);
 
 use Fuse 0.09_4;
 use MogileFS::Client;
@@ -174,7 +186,10 @@ sub mount {
 			$self->log(DEBUG, "e_removexattr: $_[0]: $_[1]");
 			$self->e_removexattr(@_);
 		},
-		'rename'      => __PACKAGE__ . '::e_rename',
+		'rename'      => sub {
+			$self->log(DEBUG, "e_rename: $_[0] -> $_[1]");
+			$self->e_rename(@_);
+		},
 		'setxattr'    => sub {
 			$self->log(DEBUG, "e_setxattr: $_[0]: $_[1] => $_[2]");
 			$self->e_setxattr(@_);
@@ -391,32 +406,7 @@ sub e_removexattr {
 }
 
 sub e_rename {
-	my ($old, $new) = @_;
-	$old = sanitize_path($old);
-	$new = sanitize_path($new);
-	logmsg(DEBUG, "e_rename: $old -> $new");
-
-	#throw an error if the new file already exists
-	return -EEXIST() if(defined get_file_info($new));
-
-	#attempt renaming the specified file
-	my $mogc = MogileFS();
-	my ($errcode, $errstr) = (-1, '');
-	my $response = eval {$mogc->rename($old, $new)};
-	if($@ || !$response) {
-		#set the error code and string if we have a MogileFS::Client object
-		if($mogc) {
-			$errcode = $mogc->errcode || -1;
-			$errstr = $mogc->errstr || '';
-		}
-		logmsg(ERROR, "Error renaming file: $errcode: $errstr");
-		$! = $errstr;
-		$? = $errcode;
-		return -EIO();
-	}
-
-	#return success
-	return 0;
+	return -EOPNOTSUPP();
 }
 
 sub e_setxattr {
