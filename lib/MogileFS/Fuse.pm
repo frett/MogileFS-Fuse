@@ -36,7 +36,7 @@ our %EXPORT_TAGS = (
 #variables to track the currently mounted Fuse object
 my $instance :shared = 1;
 my %unshared;
-my $mountedObject :shared = undef;
+my $mountedObject :shared;
 
 ##Fuse callback wrappers
 #TODO: this is a hack because the Fuse library doesn't support method callbacks or coderef callbacks in threads
@@ -66,7 +66,7 @@ BEGIN {
 sub new {
 	#create the new MogileFS::Fuse object
 	my $self = shift;
-	$self = shared_clone(bless({}, ref($self) || $self));
+	$self = bless(shared_clone({}), ref($self) || $self);
 
 	#initialize and return the new object
 	return $self->_init(@_);
@@ -131,6 +131,12 @@ sub client {
 
 	#return the MogileFS client
 	return $client;
+}
+
+sub CLONE {
+	#destroy all unshared objects to prevent non-threadsafe objects from being accessed by multiple threads
+	%unshared = ();
+	return 1;
 }
 
 #return the instance id for this object
