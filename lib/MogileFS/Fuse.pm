@@ -3,11 +3,11 @@ package MogileFS::Fuse;
 use strict;
 use threads::shared;
 
+use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
 use Fuse 0.09_4;
 use MogileFS::Client;
 use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
 use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR};
-use POSIX qw{EEXIST EIO ENOENT EOPNOTSUPP};
 
 ##Private static variables
 

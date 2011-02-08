@@ -1,12 +1,11 @@
 package MogileFS::Fuse::FilePaths;
 
 use strict;
-use utf8;
 use base qw{MogileFS::Fuse};
 
+use Errno qw{EEXIST EIO ENOENT};
 use MogileFS::Client::FilePaths;
 use MogileFS::Fuse::Constants qw{:LEVELS};
-use POSIX qw{EEXIST EIO ENOENT};
 
 ##Instance Methods
 
