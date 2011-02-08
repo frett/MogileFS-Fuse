@@ -7,6 +7,7 @@ use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
 use Fuse 0.09_4;
 use MogileFS::Client;
 use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
+use MogileFS::Fuse::File;
 use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR UNDEF};
 
 ##Private static variables
@@ -70,15 +71,16 @@ sub _init {
 	#disable threads if they aren't loaded
 	$opt{'threaded'} = 0 if(!$threads::threads);
 
+	#initialize this object
+	$self->{'config'} = shared_clone({%opt});
+	$self->{'files'} = shared_clone({});
+
 	#set the instance id
 	{
 		lock($instance);
 		$self->{'id'} = $instance;
 		$instance++;
 	}
-
-	#store the MogileFS config
-	$self->{'config'} = shared_clone({%opt});
 
 	#return the initialized object
 	return $self;
@@ -213,6 +215,32 @@ sub e_mknod {
 
 	#return success
 	return 0;
+}
+
+sub e_open {
+	my $self = shift;
+	my ($path, $flags) = @_;
+	$path = $self->sanitize_path($path);
+
+	#open the requested file
+	my $file = eval {MogileFS::Fuse::File->new(
+		'fuse'  => $self,
+		'path'  => $path,
+		'flags' => $flags,
+	)};
+	return -EIO() if($@);
+	return -EEXIST() if(!$file);
+
+	#store the file in the list of open files
+	{
+		my $files = $self->{'files'};
+		lock($files);
+		return -EIO() if(defined $files->{$file->id});
+		$files->{$file->id} = $file;
+	};
+
+	#return success and the open file id
+	return 0, $file->id;
 }
 
 sub e_readlink {
