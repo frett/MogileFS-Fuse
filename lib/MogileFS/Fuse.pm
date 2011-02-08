@@ -264,6 +264,16 @@ sub e_open {
 	return 0, $file->id;
 }
 
+sub e_read {
+	my $self = shift;
+	my ($path, $len, $off, $file) = @_;
+
+	my $buf = eval{$self->find_file($file)->read($len, $off)};
+	return -EIO() if($@);
+
+	return $buf;
+}
+
 sub e_readlink {
 	return 0;
 }

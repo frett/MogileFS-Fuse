@@ -44,6 +44,42 @@ sub _init {
 	return $self;
 }
 
+#method to read the requested data directly from the file in MogileFS
+sub _readRaw {
+	my $self = shift;
+	my ($len, $offset) = @_;
+
+	#iterate over all paths attempting to read data
+	my $ua = $self->fuse->ua;
+	my $headers = ['Range' => 'bytes=' . $offset . '-' . ($offset + $len - 1)];
+	my $res;
+	foreach my $uri ($self->getPaths()) {
+		#attempt retrieving the requested data
+		$res = $ua->request(HTTP::Request->new('GET', $uri, $headers));
+
+		#check for errors
+		if($res->is_error) {
+			#have we reached the end of this file?
+			return if($res->code == HTTP_REQUEST_RANGE_NOT_SATISFIABLE);
+
+			#try the next uri
+			next;
+		}
+
+		#exit the loop
+		last;
+	}
+
+	#was there an error satisfying this read request?
+	if(!$res || $res->is_error) {
+		$self->fuse->log(ERROR, 'Error reading data from: ' . $self->path);
+		die;
+	}
+
+	#return the fetched content
+	return $res->content
+}
+
 #method to set/return an error number for the current open file
 sub errno {
 	$_[0]->{'errno'} = $_[1] if(@_ > 1);
@@ -92,41 +128,11 @@ sub path {
 	return $_[0]->{'path'};
 }
 
-#method to read the requested data from the file into the specified buffer
 sub read {
 	my $self = shift;
 	my ($len, $offset) = @_;
 
-	#iterate over all paths attempting to read data
-	my $ua = $self->fuse->ua;
-	my $headers = ['Range' => 'bytes=' . $offset . '-' . ($offset + $len)];
-	my $res;
-	foreach my $uri ($self->getPaths()) {
-		#attempt retrieving the requested data
-		$res = $ua->request(HTTP::Request->new('GET', $uri, $headers));
-
-		#check for errors
-		if($res->is_error) {
-			#have we reached the end of this file?
-			return if($res->code == HTTP_REQUEST_RANGE_NOT_SATISFIABLE);
-
-			#try the next uri
-			next;
-		}
-
-		#exit the loop
-		last;
-	}
-
-	#was there an error satisfying this read request?
-	if(!$res || $res->is_error) {
-		$self->fuse->log(ERROR, 'Error reading data from: ' . $self->path);
-		$self->errno(-EIO());
-		die;
-	}
-
-	#return the fetched content
-	return $res->content
+	return $self->_readRaw($len, $offset);
 }
 
 1;
