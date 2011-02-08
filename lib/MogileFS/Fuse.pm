@@ -208,15 +208,7 @@ sub e_getdir {
 	return -EOPNOTSUPP();
 }
 
-sub e_getxattr {
-	return -EOPNOTSUPP();
-}
-
 sub e_link {
-	return -EOPNOTSUPP();
-}
-
-sub e_listxattr {
 	return -EOPNOTSUPP();
 }
 
@@ -249,15 +241,7 @@ sub e_readlink {
 	return 0;
 }
 
-sub e_removexattr {
-	return -EOPNOTSUPP();
-}
-
 sub e_rename {
-	return -EOPNOTSUPP();
-}
-
-sub e_setxattr {
 	return -EOPNOTSUPP();
 }
 
