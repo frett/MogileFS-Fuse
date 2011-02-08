@@ -7,7 +7,7 @@ use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
 use Fuse 0.09_4;
 use MogileFS::Client;
 use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
-use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR};
+use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR UNDEF};
 
 ##Private static variables
 
@@ -56,7 +56,7 @@ sub new {
 sub _init {
 	my $self = shift;
 	my %opt = validate(@_, {
-		'class'      => {'type' => SCALAR, 'default' => undef},
+		'class'      => {'type' => SCALAR | UNDEF, 'default' => undef},
 		'domain'     => {'type' => SCALAR},
 		'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
 		'mountpoint' => {'type' => SCALAR},
