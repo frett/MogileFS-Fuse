@@ -1,35 +1,13 @@
 package MogileFS::Fuse;
 
 use strict;
-use utf8;
-use base qw{Exporter};
 use threads::shared;
 
 use Fuse 0.09_4;
 use MogileFS::Client;
+use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
 use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR};
 use POSIX qw{EEXIST EIO ENOENT EOPNOTSUPP};
-
-use constant CALLBACKS => qw{
-	getattr readlink getdir mknod mkdir unlink rmdir symlink
-	rename link chmod chown truncate utime open read write statfs
-	flush release fsync setxattr getxattr listxattr removexattr
-};
-
-#log levels
-use constant ERROR => 0;
-use constant DEBUG => 1;
-
-our @EXPORT_OK = qw{
-	ERROR
-	DEBUG
-};
-our %EXPORT_TAGS = (
-	LEVELS => [qw{
-		ERROR
-		DEBUG
-	}],
-);
 
 ##Private static variables
 

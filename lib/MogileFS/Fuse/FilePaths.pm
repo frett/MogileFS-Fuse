@@ -5,7 +5,7 @@ use utf8;
 use base qw{MogileFS::Fuse};
 
 use MogileFS::Client::FilePaths;
-use MogileFS::Fuse qw{:LEVELS};
+use MogileFS::Fuse::Constants qw{:LEVELS};
 use POSIX qw{EEXIST EIO ENOENT};
 
 ##Instance Methods
