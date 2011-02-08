@@ -5,6 +5,7 @@ use threads::shared;
 
 use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
 use Fuse 0.09_4;
+use LWP;
 use MogileFS::Client;
 use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
 use MogileFS::Fuse::File;
@@ -170,6 +171,23 @@ sub sanitize_path {
 	$path = '/' . $path unless($path =~ m!^/!so);
 
 	return $path;
+}
+
+#method that will return an LWP UserAgent object
+sub ua {
+	my $ua = $_[0]->_localElem('ua');
+
+	#create and store a new ua if one doesn't exist already
+	if(!defined $ua) {
+		$ua = LWP::UserAgent->new(
+			'keep_alive' => 60,
+			'timeout'    => 5,
+		);
+		$_[0]->_localElem('ua', $ua);
+	}
+
+	#return the UserAgent
+	return $ua;
 }
 
 ##Callback Functions
