@@ -9,11 +9,11 @@ use MogileFS::Client;
 use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
 use MogileFS::Fuse::File;
 use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR UNDEF};
+use Scalar::Util qw{refaddr};
 
 ##Private static variables
 
 #variables to track the currently mounted Fuse object
-my $instance :shared = 1;
 my %unshared;
 my $mountedObject :shared;
 
@@ -74,13 +74,7 @@ sub _init {
 	#initialize this object
 	$self->{'config'} = shared_clone({%opt});
 	$self->{'files'} = shared_clone({});
-
-	#set the instance id
-	{
-		lock($instance);
-		$self->{'id'} = $instance;
-		$instance++;
-	}
+	$self->{'id'} = is_shared($self) || refaddr($self);
 
 	#return the initialized object
 	return $self;
