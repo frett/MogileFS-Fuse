@@ -10,7 +10,7 @@ use MogileFS::Client;
 use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
 use MogileFS::Fuse::File;
 use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR UNDEF};
-use Scalar::Util qw{refaddr};
+use Scalar::Util qw{blessed refaddr};
 
 ##Private static variables
 
@@ -112,6 +112,15 @@ sub CLONE {
 	#destroy all unshared objects to prevent non-threadsafe objects from being accessed by multiple threads
 	%unshared = ();
 	return 1;
+}
+
+#method that will look up the requested file
+sub find_file {
+	my $self = shift;
+	my ($file) = @_;
+	$file = $self->{'files'}->{$file} if(!blessed($file));
+	$self->log(ERROR, 'Something went wrong finding a file') if(!defined $file);
+	return $file;
 }
 
 #return the instance id for this object
