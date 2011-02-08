@@ -171,7 +171,7 @@ sub mount {
 		'threaded' => $self->{'config'}->{'threaded'},
 
 		#callback functions
-		map {$_ => __PACKAGE__ . '::_' . $_} CALLBACKS,
+		(map {$_ => __PACKAGE__ . '::_' . $_} grep {$self->can('e_' . $_)} CALLBACKS),
 	);
 
 	#reset mounted state
