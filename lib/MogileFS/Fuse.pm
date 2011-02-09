@@ -90,24 +90,6 @@ sub _localElem {
 	return $old;
 }
 
-#method that will return a MogileFS object
-sub client {
-	my $client = $_[0]->_localElem('client');
-
-	#create and store a new client if one doesn't exist already
-	if(!defined $client) {
-		my $config = $_[0]->{'config'};
-		$client = MogileFS::Client->new(
-			'hosts'  => [@{$config->{'trackers'}}],
-			'domain' => $config->{'domain'},
-		);
-		$_[0]->_localElem('client', $client);
-	}
-
-	#return the MogileFS client
-	return $client;
-}
-
 sub CLONE {
 	#destroy all unshared objects to prevent non-threadsafe objects from being accessed by multiple threads
 	%unshared = ();
@@ -134,6 +116,24 @@ sub log {
 	my ($level, $msg) = @_;
 	return if($level > $self->{'config'}->{'loglevel'});
 	print STDERR $msg, "\n";
+}
+
+#method that will return a MogileFS object
+sub MogileFS {
+	my $client = $_[0]->_localElem('MogileFS');
+
+	#create and store a new client if one doesn't exist already
+	if(!defined $client) {
+		my $config = $_[0]->{'config'};
+		$client = MogileFS::Client->new(
+			'hosts'  => [@{$config->{'trackers'}}],
+			'domain' => $config->{'domain'},
+		);
+		$_[0]->_localElem('MogileFS', $client);
+	}
+
+	#return the MogileFS client
+	return $client;
 }
 
 #Method to mount the specified MogileFS domain to the filesystem
@@ -219,7 +219,7 @@ sub e_mknod {
 	$path = $self->sanitize_path($path);
 
 	#attempt creating an empty file
-	my $mogc = $self->client();
+	my $mogc = $self->MogileFS();
 	my ($errcode, $errstr) = (-1, '');
 	my $response = eval {$mogc->new_file($path, $self->{'config'}->{'class'})->close};
 	if($@ || !$response) {
@@ -296,7 +296,7 @@ sub e_unlink {
 	$path = $self->sanitize_path($path);
 
 	#attempt deleting the specified file
-	my $mogc = $self->client();
+	my $mogc = $self->MogileFS();
 	my ($errcode, $errstr) = (-1, '');
 	eval {$mogc->delete($path)};
 	if($@) {

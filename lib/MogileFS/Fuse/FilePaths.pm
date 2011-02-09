@@ -9,24 +9,6 @@ use MogileFS::Fuse::Constants qw{:LEVELS};
 
 ##Instance Methods
 
-#method that will return a MogileFS object
-sub client {
-	my $client = $_[0]->_localElem('client');
-
-	#create and store a new client if one doesn't exist already
-	if(!defined $client) {
-		my $config = $_[0]->{'config'};
-		$client = MogileFS::Client::FilePaths->new(
-			'hosts'  => [@{$config->{'trackers'}}],
-			'domain' => $config->{'domain'},
-		);
-		$_[0]->_localElem('client', $client);
-	}
-
-	#return the MogileFS client
-	return $client;
-}
-
 #fetch meta-data about the specified file
 sub get_file_info($) {
 	my $self = shift;
@@ -45,7 +27,7 @@ sub get_file_info($) {
 	#look up meta-data for the directory containing the specified file
 	#TODO: maybe cache this lookup
 	my $finfo = eval {
-		my $mogc = $self->client();
+		my $mogc = $self->MogileFS();
 		my @files = $mogc->list($dir);
 		foreach(@files) {
 			return $_ if($_->{'name'} eq $file);
@@ -55,6 +37,24 @@ sub get_file_info($) {
 
 	#return the found file info
 	return $finfo;
+}
+
+#method that will return a MogileFS object
+sub MogileFS {
+	my $client = $_[0]->_localElem('MogileFS');
+
+	#create and store a new client if one doesn't exist already
+	if(!defined $client) {
+		my $config = $_[0]->{'config'};
+		$client = MogileFS::Client::FilePaths->new(
+			'hosts'  => [@{$config->{'trackers'}}],
+			'domain' => $config->{'domain'},
+		);
+		$_[0]->_localElem('MogileFS', $client);
+	}
+
+	#return the MogileFS client
+	return $client;
 }
 
 ##Fuse callbacks
@@ -105,7 +105,7 @@ sub e_getdir {
 	$path = $self->sanitize_path($path);
 
 	#fetch all the files in the specified directory
-	my @files = eval {$self->client()->list($path)};
+	my @files = eval {$self->MogileFS->list($path)};
 	return -EIO() if($@);
 
 	#return this directory listing
@@ -122,7 +122,7 @@ sub e_rename {
 	return -EEXIST() if(defined $self->get_file_info($new));
 
 	#attempt renaming the specified file
-	my $mogc = $self->client();
+	my $mogc = $self->MogileFS();
 	my $response = eval {$mogc->rename($old, $new)};
 	if($@ || !$response) {
 		($?, $!) = (-1, '');

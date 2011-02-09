@@ -94,7 +94,7 @@ sub getPaths {
 
 	#load the file paths
 	if(!exists $self->{'paths'}) {
-		my $mogc = $self->fuse->client();
+		my $mogc = $self->MogileFS();
 		$self->{'paths'} = shared_clone([]);
 		push @{$self->{'paths'}}, eval {$mogc->get_paths($self->path)};
 		if($@) {
@@ -115,6 +115,10 @@ sub getPaths {
 
 sub id {
 	return $_[0]->{'id'};
+}
+
+sub MogileFS {
+	return $_[0]->fuse->MogileFS();
 }
 
 sub path {
