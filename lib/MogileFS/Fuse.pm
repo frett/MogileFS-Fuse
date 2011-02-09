@@ -15,8 +15,8 @@ use Scalar::Util qw{blessed refaddr};
 ##Private static variables
 
 #variables to track the currently mounted Fuse object
-my %unshared;
 my $mountedObject :shared;
+my %unshared;
 
 ##Fuse callback wrappers
 #TODO: this is a hack because the Fuse library doesn't support method callbacks or coderef callbacks in threads

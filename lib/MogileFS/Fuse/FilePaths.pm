@@ -105,9 +105,8 @@ sub e_getdir {
 	$path = $self->sanitize_path($path);
 
 	#fetch all the files in the specified directory
-	my @files = eval {
-		return $self->client()->list($path);
-	};
+	my @files = eval {$self->client()->list($path)};
+	return -EIO() if($@);
 
 	#return this directory listing
 	return ('.', '..', map {$_->{'name'}} @files), 0;
@@ -124,17 +123,15 @@ sub e_rename {
 
 	#attempt renaming the specified file
 	my $mogc = $self->client();
-	my ($errcode, $errstr) = (-1, '');
 	my $response = eval {$mogc->rename($old, $new)};
 	if($@ || !$response) {
+		($?, $!) = (-1, '');
 		#set the error code and string if we have a MogileFS::Client object
 		if($mogc) {
-			$errcode = $mogc->errcode || -1;
-			$errstr = $mogc->errstr || '';
+			$? = $mogc->errcode || -1;
+			$! = $mogc->errstr || '';
 		}
-		$self->log(ERROR, "Error renaming file: $errcode: $errstr");
-		$! = $errstr;
-		$? = $errcode;
+		$self->log(ERROR, "Error renaming file: $?: $!");
 		return -EIO();
 	}
 

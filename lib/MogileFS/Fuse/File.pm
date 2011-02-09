@@ -80,12 +80,6 @@ sub _readRaw {
 	return $res->content
 }
 
-#method to set/return an error number for the current open file
-sub errno {
-	$_[0]->{'errno'} = $_[1] if(@_ > 1);
-	return $_[0]->{'errno'};
-}
-
 sub flags {
 	return $_[0]->{'flags'};
 }
@@ -111,8 +105,7 @@ sub getPaths {
 				$! = $mogc->errstr || '';
 			}
 			$self->fuse->log(ERROR, 'Error opening file: ' . $? . ': ' . $!);
-			$self->errno(-EIO());
-			die $@;
+			die;
 		}
 	}
 
