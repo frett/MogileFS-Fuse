@@ -5,6 +5,7 @@ use threads::shared;
 
 use Errno qw{EIO};
 use Fcntl;
+use HTTP::Request;
 use HTTP::Status qw{HTTP_REQUEST_RANGE_NOT_SATISFIABLE};
 use MogileFS::Fuse::Constants qw{:LEVELS};
 use Scalar::Util qw{refaddr};
@@ -93,19 +94,24 @@ sub getPaths {
 	my $self = shift;
 
 	#load the file paths
-	if(!exists $self->{'paths'}) {
-		my $mogc = $self->MogileFS();
-		$self->{'paths'} = shared_clone([]);
-		push @{$self->{'paths'}}, eval {$mogc->get_paths($self->path)};
-		if($@) {
-			#set the error code and string if we have a MogileFS::Client object
-			($?, $!) = (-1, '');
-			if($mogc) {
-				$? = $mogc->errcode || -1;
-				$! = $mogc->errstr || '';
+	{
+		#lock here to make sure the paths are only loaded once and a thread doesn't
+		#happen to get different paths for a request than other threads
+		lock($self);
+		if(!$self->{'paths'}) {
+			my $mogc = $self->MogileFS();
+			$self->{'paths'} = shared_clone([]);
+			push @{$self->{'paths'}}, eval {$mogc->get_paths($self->path)};
+			if($@) {
+				#set the error code and string if we have a MogileFS::Client object
+				($?, $!) = (-1, '');
+				if($mogc) {
+					$? = $mogc->errcode || -1;
+					$! = $mogc->errstr || '';
+				}
+				$self->fuse->log(ERROR, 'Error opening file: ' . $? . ': ' . $!);
+				die;
 			}
-			$self->fuse->log(ERROR, 'Error opening file: ' . $? . ': ' . $!);
-			die;
 		}
 	}
 
