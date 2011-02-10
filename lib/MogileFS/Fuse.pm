@@ -278,6 +278,20 @@ sub e_readlink {
 	return 0;
 }
 
+sub e_release    {
+	my $self = shift;
+	my ($path, $flags, $file) = @_;
+	$file = $self->find_file($file);
+
+	eval {
+		delete $self->{'files'}->{$file->id};
+		$file->close();
+	};
+	return -EIO() if($@);
+
+	return 0;
+}
+
 sub e_rename {
 	return -EOPNOTSUPP();
 }
@@ -313,6 +327,17 @@ sub e_unlink {
 
 	#return success
 	return 0;
+}
+
+sub e_write {
+	my $self = shift;
+	my ($path, $buf, $offset, $file) = @_;
+	$file = $self->find_file($file);
+
+	my $bytesWritten = eval{$self->find_file($file)->write($buf, $offset)};
+	return -EIO() if($@);
+
+	return $bytesWritten;
 }
 
 1;

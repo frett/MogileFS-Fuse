@@ -81,12 +81,126 @@ sub _readRaw {
 	return $res->content
 }
 
+#method to write the specified data to a file in MogileFS
+sub _writeRaw {
+	my $self = shift;
+	my ($buf, $offset) = @_;
+
+	#attempt writing the buffer to the output destination
+	if(my $dest = $self->getOutputDest()) {
+		my $len = length($buf);
+
+		#build request
+		my $uri = $dest->{'path'};
+		my $headers = ['Content-Range' => 'bytes ' . $offset . '-' . ($offset + $len - 1) . '/*'];
+		my $req = HTTP::Request->new('PUT', $uri, $headers);
+		$req->add_content($buf);
+
+		#attempt this raw write
+		my $res = $self->fuse->ua->request($req);
+		if(!$res || $res->is_error) {
+			$self->fuse->log(ERROR, 'Error writing data to: ' . $self->path);
+			$dest->{'error'} = 1;
+			die $@;
+		}
+
+		#update the output size
+		{
+			lock($dest);
+			$dest->{'size'} = $offset + $len if($offset + $len > $dest->{'size'});
+		}
+
+		#return the number of bytes written
+		return $len;
+	}
+	else {
+		$self->fuse->log(ERROR, 'Cannot write to file: ' . $self->path);
+		die;
+	}
+}
+
+sub close {
+	my $self = shift;
+
+	#close an open output handle if we are in a write mode
+	if($self->flags & (O_WRONLY | O_RDWR)) {
+		my $dest = $self->getOutputDest();
+
+		#TODO: need to make sure there are no current writes happening (this should be probably be handled by flush eventually)
+
+		my $res = eval {
+			my $config = $self->fuse->{'config'};
+			$self->MogileFS->{'backend'}->do_request('create_close', {
+				'fid'    => $dest->{'fid'},
+				'devid'  => $dest->{'devid'},
+				'domain' => $config->{'domain'},
+				'size'   => $dest->{'size'},
+				'key'    => ($dest->{'error'} ? '' : $self->path),
+				'path'   => $dest->{'path'},
+			});
+		};
+		if($@ || !$res) {
+			$self->fuse->log(ERROR, 'Error closing open file: ' . $self->path);
+			die;
+		}
+	}
+
+	return;
+}
+
 sub flags {
 	return $_[0]->{'flags'};
 }
 
 sub fuse {
 	return $_[0]->{'fuse'};
+}
+
+#method that will return an output path for writing to this file
+sub getOutputDest {
+	my $self = shift;
+
+	#short-circuit if we are in a read only mode
+	return if(!($self->flags & (O_WRONLY | O_RDWR)));
+
+	#create an output path if one doesn't exist already
+	{
+		lock($self);
+		if(!$self->{'dest'}) {
+			#create a new temporary file in MogileFS
+			my $tmpFile = eval{
+				my $config = $self->fuse->{'config'};
+				$self->MogileFS->{'backend'}->do_request('create_open', {
+					'domain'     => $config->{'domain'},
+					'class'      => $config->{'class'},
+					'key'        => $self->path,
+					'fid'        => 0,
+					'multi_dest' => 0,
+				});
+			};
+			if($@ || !$tmpFile) {
+				$self->fuse->log(ERROR, 'Error creating temporary file in MogileFS: ' . $self->path);
+				die;
+			}
+
+			#attempt creating a file at the specified location
+			my $res = $self->fuse->ua->request(HTTP::Request->new('PUT' => $tmpFile->{'path'}));
+			if(!$res->is_success()) {
+				$self->fuse->log(ERROR, 'Error creating temporary file in MogileFS: ' . $self->path);
+				die;
+			}
+
+			#store the destination
+			$self->{'dest'} = shared_clone({
+				'devid' => $tmpFile->{'devid'},
+				'fid'   => $tmpFile->{'fid'},
+				'path'  => $tmpFile->{'path'},
+				'size'  => 0,
+			});
+		}
+	}
+
+	return $self->{'dest'};
 }
 
 #method that will return the paths for the current file
@@ -136,6 +250,13 @@ sub read {
 	my ($len, $offset) = @_;
 
 	return $self->_readRaw($len, $offset);
+}
+
+sub write {
+	my $self = shift;
+	my ($buf, $offset) = @_;
+
+	return $self->_writeRaw($buf, $offset);
 }
 
 1;
