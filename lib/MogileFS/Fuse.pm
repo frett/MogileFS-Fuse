@@ -28,7 +28,7 @@ BEGIN {
 
 		*$callback = sub {
 			my $self = $mountedObject;
-			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} @_) . ')') if($self->{'config'}->{'loglevel'} >= DEBUG);
+			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'e_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')') if($self->{'config'}->{'loglevel'} >= DEBUG);
 			$self->$method(@_);
 		};
 	}
