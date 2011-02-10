@@ -112,6 +112,26 @@ sub e_getdir {
 	return ('.', '..', map {$_->{'name'}} @files), 0;
 }
 
+sub e_mkdir {
+	my $self = shift;
+	my ($path, $mode) = @_;
+	$path = $self->sanitize_path($path);
+
+	#create and delete a file to force path vivification
+	eval{
+		my $file = $path . '/.mkdir_tmp_' . join('', map {chr(int(rand(26)) + 97)} (0..9));
+		my $mogc = $self->MogileFS();
+		die unless($mogc->new_file($file, $self->{'config'}->{'class'})->close);
+		$mogc->delete($file);
+	};
+	if($@) {
+		$self->log(ERROR, 'Error creating new directory: ' . $path);
+		return -EIO();
+	}
+
+	return 0;
+}
+
 sub e_rename {
 	my $self = shift;
 	my ($old, $new) = @_;
