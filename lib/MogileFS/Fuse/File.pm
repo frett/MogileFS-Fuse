@@ -137,6 +137,12 @@ sub close {
 				'size'   => $dest->{'size'},
 				'key'    => ($dest->{'error'} ? '' : $self->path),
 				'path'   => $dest->{'path'},
+
+				# these attributes are specific to MogileFS::Client::FilePaths which utilizes the MetaData MogileFS plugin
+				#TODO: move this into a FilePaths specific file object
+				'plugin.meta.keys'   => 1,
+				'plugin.meta.key0'   => 'mtime',
+				'plugin.meta.value0' => scalar time,
 			});
 		};
 		if($@ || !$res) {

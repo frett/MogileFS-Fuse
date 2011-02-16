@@ -79,7 +79,7 @@ sub e_getattr {
 	#TODO: set more sane values for file attributes
 	my ($dev, $ino, $rdev, $blocks, $gid, $uid, $nlink, $blksize) = (0,0,0,1,0,0,1,1024);
 	my ($atime, $ctime, $mtime);
-	$atime = $ctime = $mtime = $finfo->{'mtime'} || time;
+	$atime = $ctime = $mtime = $finfo->{'modified'} || time;
 
 	#return the attribute values
 	return (
