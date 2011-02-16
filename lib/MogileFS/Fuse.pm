@@ -4,6 +4,7 @@ use strict;
 use threads::shared;
 
 use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
+use Fcntl qw{O_WRONLY};
 use Fuse 0.09_4;
 use LWP;
 use MogileFS::Client;
@@ -219,20 +220,14 @@ sub e_mknod {
 	$path = $self->sanitize_path($path);
 
 	#attempt creating an empty file
-	my $mogc = $self->MogileFS();
-	my ($errcode, $errstr) = (-1, '');
-	my $response = eval {$mogc->new_file($path, $self->{'config'}->{'class'})->close};
-	if($@ || !$response) {
-		#set the error code and string if we have a MogileFS::Client object
-		if($mogc) {
-			$errcode = $mogc->errcode || -1;
-			$errstr = $mogc->errstr || '';
-		}
-		$self->log(ERROR, "Error creating file: $errcode: $errstr");
-		$! = $errstr;
-		$? = $errcode;
-		return -EIO();
-	}
+	eval {
+		MogileFS::Fuse::File->new(
+			'fuse'  => $self,
+			'path'  => $path,
+			'flags' => O_WRONLY,
+		)->close();
+	};
+	return -EIO() if($@);
 
 	#return success
 	return 0;
