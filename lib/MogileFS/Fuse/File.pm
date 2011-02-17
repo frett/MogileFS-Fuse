@@ -322,7 +322,7 @@ sub write {
 	my ($buf, $offset) = @_;
 
 	#make sure data is copied from the old file past the specified write buffer
-	$self->_cow($offset + length($buf));
+	$self->_cow($offset + length($$buf));
 
 	#write the raw data
 	return $self->_writeRaw($buf, $offset);
