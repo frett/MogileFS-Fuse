@@ -28,7 +28,7 @@ sub new {
 ##Instance Methods
 
 #method that will copy existing data from the old handle to the new handle
-sub _copyTo {
+sub _cow {
 	my $self = shift;
 	my ($newPtr) = @_;
 
@@ -69,7 +69,7 @@ sub _readRaw {
 	my ($len, $offset, $output) = @_;
 
 	#make sure the read request from the output file is satisfiable
-	$self->_copyTo($offset + $len) if($output);
+	$self->_cow($offset + $len) if($output);
 
 	#iterate over all paths attempting to read data
 	my $ua = $self->fuse->ua;
@@ -158,7 +158,7 @@ sub close {
 		my $dest = $self->getOutputDest();
 
 		#copy any data that hasn't been copied yet
-		$self->_copyTo($self->{'copyPtr'} + 1024*1024) while(defined $self->{'copyPtr'});
+		$self->_cow($self->{'copyPtr'} + 1024*1024) while(defined $self->{'copyPtr'});
 
 		#TODO: need to make sure there are no current writes happening (this should be probably be handled by flush eventually)
 
@@ -297,7 +297,7 @@ sub write {
 	my ($buf, $offset) = @_;
 
 	#make sure data is copied from the old file past the specified write buffer
-	$self->_copyTo($offset + length($buf));
+	$self->_cow($offset + length($buf));
 
 	#write the raw data
 	return $self->_writeRaw($buf, $offset);
