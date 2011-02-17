@@ -171,6 +171,18 @@ sub mount {
 	return;
 }
 
+#thin wrapper for opening a file that can be overriden by subclasses as necessary
+sub openFile {
+	my $self = shift;
+	my ($path, $flags) = @_;
+
+	return MogileFS::Fuse::File->new(
+		'fuse'  => $self,
+		'path'  => $path,
+		'flags' => $flags,
+	);
+}
+
 sub sanitize_path {
 	my $self = shift;
 	my ($path) = @_;
@@ -220,13 +232,7 @@ sub e_mknod {
 	$path = $self->sanitize_path($path);
 
 	#attempt creating an empty file
-	eval {
-		MogileFS::Fuse::File->new(
-			'fuse'  => $self,
-			'path'  => $path,
-			'flags' => O_WRONLY,
-		)->close();
-	};
+	eval {$self->openFile($path, O_WRONLY)->close()};
 	return -EIO() if($@);
 
 	#return success
@@ -239,11 +245,7 @@ sub e_open {
 	$path = $self->sanitize_path($path);
 
 	#open the requested file
-	my $file = eval {MogileFS::Fuse::File->new(
-		'fuse'  => $self,
-		'path'  => $path,
-		'flags' => $flags,
-	)};
+	my $file = eval {$self->openFile($path, $flags)};
 	return -EIO() if($@);
 	return -EEXIST() if(!$file);
 
