@@ -48,7 +48,6 @@ sub _init {
 	my (%opt) = @_;
 
 	#set all the specified options
-	$self->{'copyPtr'} = 0;
 	$self->{'flags'} = $opt{'flags'};
 	$self->{'fuse'} = $opt{'fuse'};
 	$self->{'id'} = is_shared($self) || refaddr($self);
@@ -56,6 +55,9 @@ sub _init {
 
 	#short-circuit if the file isn't opened for writing and doesn't exist in MogileFS
 	return if(!($self->flags & (O_WRONLY | O_RDWR)) && !$self->getPaths());
+
+	#initialize the copy pointer for COW when the file is in write mode and a previous version exists
+	$self->{'copyPtr'} = 0 if($self->flags & (O_WRONLY | O_RDWR) && $self->getPaths());
 
 	#return the initialized object
 	return $self;
@@ -145,6 +147,9 @@ sub close {
 	#close an open output handle if we are in a write mode
 	if($self->flags & (O_WRONLY | O_RDWR)) {
 		my $dest = $self->getOutputDest();
+
+		#copy any data that hasn't been copied yet
+		$self->_copyTo($self->{'copyPtr'} + 1024*1024) while(defined $self->{'copyPtr'});
 
 		#TODO: need to make sure there are no current writes happening (this should be probably be handled by flush eventually)
 
