@@ -30,13 +30,20 @@ sub new {
 #method that will copy existing data from the old handle to the new handle
 sub _cow {
 	my $self = shift;
-	my ($newPtr) = @_;
+	my ($newPtr, $limit) = @_;
 
-	while(defined $self->{'copyPtr'} && $self->{'copyPtr'} < $newPtr) {
+	#sanitize limit
+	$limit = $newPtr if(defined $limit && $limit < $newPtr);
+
+	while(defined $self->{'cowPtr'} && $self->{'cowPtr'} < $newPtr) {
+		#set the buffer size for the next block being copied, limit it as necessary
+		my $bufSize = 1024 * 1024;
+		$bufSize = $limit - $self->{'cowPtr'} if(defined($limit) && $self->{'cowPtr'} + $bufSize > $limit);
+
 		#copy a block of data unless
-		my $bytes = $self->_writeRaw($self->_readRaw(1024*1024, $self->{'copyPtr'}), $self->{'copyPtr'});
-		$self->{'copyPtr'} += $bytes;
-		delete $self->{'copyPtr'} if(!$bytes);
+		my $bytes = $self->_writeRaw($self->_readRaw($bufSize, $self->{'cowPtr'}), $self->{'cowPtr'});
+		$self->{'cowPtr'} += $bytes;
+		delete $self->{'cowPtr'} if(!$bytes);
 	}
 
 	return;
@@ -56,8 +63,8 @@ sub _init {
 	#short-circuit if the file isn't opened for writing and doesn't exist in MogileFS
 	return if(!($self->flags & (O_WRONLY | O_RDWR)) && !$self->getPaths());
 
-	#initialize the copy pointer for COW when the file is in write mode and a previous version exists
-	$self->{'copyPtr'} = 0 if($self->flags & (O_WRONLY | O_RDWR) && $self->getPaths());
+	#initialize the cow pointer for COW when the file is in write mode and a previous version exists
+	$self->{'cowPtr'} = 0 if($self->flags & (O_WRONLY | O_RDWR) && $self->getPaths());
 
 	#return the initialized object
 	return $self;
@@ -158,7 +165,7 @@ sub close {
 		my $dest = $self->getOutputDest();
 
 		#copy any data that hasn't been copied yet
-		$self->_cow($self->{'copyPtr'} + 1024*1024) while(defined $self->{'copyPtr'});
+		$self->_cow($self->{'cowPtr'} + 1024*1024) while(defined $self->{'cowPtr'});
 
 		#TODO: need to make sure there are no current writes happening (this should be probably be handled by flush eventually)
 
@@ -290,6 +297,24 @@ sub read {
 	my ($len, $offset) = @_;
 
 	return $self->_readRaw($len, $offset, $self->flags & (O_WRONLY | O_RDWR));
+}
+
+#method that will truncate this file to the specified byte
+sub truncate {
+	my $self = shift;
+	my ($size) = @_;
+
+	#throw an error if it is not possible to truncate the file to the specified size
+	if(!defined $self->{'cowPtr'} || $self->{'cowPtr'} > $size) {
+		$self->fuse->log(ERROR, 'Cannot truncate ' . $self->path . ' to ' . $size);
+		die;
+	}
+
+	#copy up to $size bytes of the file
+	$self->_cow($size, $size);
+	delete $self->{'cowPtr'};
+
+	return;
 }
 
 sub write {

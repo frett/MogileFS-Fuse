@@ -301,6 +301,22 @@ sub e_symlink {
 	return -EOPNOTSUPP();
 }
 
+sub e_truncate {
+	my $self = shift;
+	my ($path, $size) = @_;
+
+	#attempt to truncate the specified file
+	eval{
+		my $file = $self->openFile($path, O_WRONLY);
+		$file->truncate($size);
+		$file->close;
+	};
+	return -EIO() if($@);
+
+	#return success
+	return 0;
+}
+
 sub e_unlink {
 	my $self = shift;
 	my ($path) = @_;
