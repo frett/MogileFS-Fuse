@@ -27,12 +27,28 @@ sub new {
 
 ##Instance Methods
 
+#method that will copy existing data from the old handle to the new handle
+sub _copyTo {
+	my $self = shift;
+	my ($newPtr) = @_;
+
+	while(defined $self->{'copyPtr'} && $self->{'copyPtr'} < $newPtr) {
+		#copy a block of data unless
+		my $bytes = $self->_writeRaw($self->_readRaw(1024*1024, $self->{'copyPtr'}), $self->{'copyPtr'});
+		$self->{'copyPtr'} += $bytes;
+		delete $self->{'copyPtr'} if(!$bytes);
+	}
+
+	return;
+}
+
 #method to initialize this file object
 sub _init {
 	my $self = shift;
 	my (%opt) = @_;
 
 	#set all the specified options
+	$self->{'copyPtr'} = 0;
 	$self->{'flags'} = $opt{'flags'};
 	$self->{'fuse'} = $opt{'fuse'};
 	$self->{'id'} = is_shared($self) || refaddr($self);
@@ -45,23 +61,26 @@ sub _init {
 	return $self;
 }
 
-#method to read the requested data directly from the file in MogileFS
+#method to read the requested data directly from a file in MogileFS
 sub _readRaw {
 	my $self = shift;
-	my ($len, $offset) = @_;
+	my ($len, $offset, $output) = @_;
+
+	#make sure the read request from the output file is satisfiable
+	$self->_copyTo($offset + $len) if($output);
 
 	#iterate over all paths attempting to read data
 	my $ua = $self->fuse->ua;
 	my $headers = ['Range' => 'bytes=' . $offset . '-' . ($offset + $len - 1)];
 	my $res;
-	foreach my $uri ($self->getPaths()) {
+	foreach my $uri ($output ? $self->getOutputDest->{'path'} : $self->getPaths()) {
 		#attempt retrieving the requested data
 		$res = $ua->request(HTTP::Request->new('GET', $uri, $headers));
 
 		#check for errors
 		if($res->is_error) {
 			#have we reached the end of this file?
-			return if($res->code == HTTP_REQUEST_RANGE_NOT_SATISFIABLE);
+			return '' if($res->code == HTTP_REQUEST_RANGE_NOT_SATISFIABLE);
 
 			#try the next uri
 			next;
@@ -78,7 +97,7 @@ sub _readRaw {
 	}
 
 	#return the fetched content
-	return $res->content
+	return $res->content;
 }
 
 #method to write the specified data to a file in MogileFS
@@ -89,6 +108,7 @@ sub _writeRaw {
 	#attempt writing the buffer to the output destination
 	if(my $dest = $self->getOutputDest()) {
 		my $len = length($buf);
+		return 0 if($len <= 0);
 
 		#build request
 		my $uri = $dest->{'path'};
@@ -101,7 +121,7 @@ sub _writeRaw {
 		if(!$res || $res->is_error) {
 			$self->fuse->log(ERROR, 'Error writing data to: ' . $self->path);
 			$dest->{'error'} = 1;
-			die $@;
+			die;
 		}
 
 		#update the output size
@@ -255,13 +275,17 @@ sub read {
 	my $self = shift;
 	my ($len, $offset) = @_;
 
-	return $self->_readRaw($len, $offset);
+	return $self->_readRaw($len, $offset, $self->flags & (O_WRONLY | O_RDWR));
 }
 
 sub write {
 	my $self = shift;
 	my ($buf, $offset) = @_;
 
+	#make sure data is copied from the old file past the specified write buffer
+	$self->_copyTo($offset + length($buf));
+
+	#write the raw data
 	return $self->_writeRaw($buf, $offset);
 }
 
