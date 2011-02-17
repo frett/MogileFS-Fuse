@@ -266,7 +266,7 @@ sub e_read {
 	my $buf = eval{$self->find_file($file)->read($len, $off)};
 	return -EIO() if($@);
 
-	return $buf;
+	return defined($buf) ? $$buf : '';
 }
 
 sub e_readlink {
@@ -326,8 +326,9 @@ sub e_unlink {
 
 sub e_write {
 	my $self = shift;
-	my ($path, $buf, $offset, $file) = @_;
-	$file = $self->find_file($file);
+	my $buf = \$_[1];
+	my $offset = $_[2];
+	my $file = $self->find_file($_[3]);
 
 	my $bytesWritten = eval{$self->find_file($file)->write($buf, $offset)};
 	return -EIO() if($@);

@@ -77,12 +77,12 @@ sub _readRaw {
 	my $res;
 	foreach my $uri ($output ? $self->getOutputDest->{'path'} : $self->getPaths()) {
 		#attempt retrieving the requested data
-		$res = $ua->request(HTTP::Request->new('GET', $uri, $headers));
+		$res = $ua->request(HTTP::Request->new('GET' => $uri, $headers));
 
 		#check for errors
 		if($res->is_error) {
 			#have we reached the end of this file?
-			return '' if($res->code == HTTP_REQUEST_RANGE_NOT_SATISFIABLE);
+			return undef if($res->code == HTTP_REQUEST_RANGE_NOT_SATISFIABLE);
 
 			#try the next uri
 			next;
@@ -99,7 +99,8 @@ sub _readRaw {
 	}
 
 	#return the fetched content
-	return $res->content;
+	$res->decode;
+	return $res->content_ref;
 }
 
 #method to write the specified data to a file in MogileFS
@@ -109,27 +110,35 @@ sub _writeRaw {
 
 	#attempt writing the buffer to the output destination
 	if(my $dest = $self->getOutputDest()) {
-		my $len = length($buf);
-		return 0 if($len <= 0);
-
-		#build request
-		my $uri = $dest->{'path'};
-		my $headers = ['Content-Range' => 'bytes ' . $offset . '-' . ($offset + $len - 1) . '/*'];
-		my $req = HTTP::Request->new('PUT', $uri, $headers);
-		$req->add_content($buf);
-
-		#attempt this raw write
-		my $res = $self->fuse->ua->request($req);
-		if(!$res || $res->is_error) {
-			$self->fuse->log(ERROR, 'Error writing data to: ' . $self->path);
+		#short-circuit if an invalid buffer was provided
+		if(defined($buf) && ref($buf) ne 'SCALAR') {
+			$self->fuse->log(ERROR, 'Invalid buffer passed to _writeRaw');
 			$dest->{'error'} = 1;
 			die;
 		}
 
-		#update the output size
-		{
-			lock($dest);
-			$dest->{'size'} = $offset + $len if($offset + $len > $dest->{'size'});
+		#write buffer if it contains any data
+		my $len = 0;
+		if(ref($buf) eq 'SCALAR' && ($len = length($$buf))) {
+			#build request
+			my $req = HTTP::Request->new('PUT' => $dest->{'path'}, [
+				'Content-Range' => 'bytes ' . $offset . '-' . ($offset + $len - 1) . '/*',
+			]);
+			$req->content_ref($buf);
+
+			#attempt this raw write
+			my $res = $self->fuse->ua->request($req);
+			if(!$res || $res->is_error) {
+				$self->fuse->log(ERROR, 'Error writing data to: ' . $self->path);
+				$dest->{'error'} = 1;
+				die;
+			}
+
+			#update the output size
+			{
+				lock($dest);
+				$dest->{'size'} = $offset + $len if($offset + $len > $dest->{'size'});
+			}
 		}
 
 		#return the number of bytes written
