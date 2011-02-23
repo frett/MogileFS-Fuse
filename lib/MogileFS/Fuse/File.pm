@@ -40,8 +40,8 @@ sub _cow {
 		my $bufSize = 1024 * 1024;
 		$bufSize = $limit - $self->{'cowPtr'} if(defined($limit) && $self->{'cowPtr'} + $bufSize > $limit);
 
-		#copy a block of data unless
-		my $bytes = $self->_writeRaw($self->_readRaw($bufSize, $self->{'cowPtr'}), $self->{'cowPtr'});
+		#copy a block of data
+		my $bytes = $self->_write($self->_read($bufSize, $self->{'cowPtr'}), $self->{'cowPtr'});
 		$self->{'cowPtr'} += $bytes;
 		delete $self->{'cowPtr'} if(!$bytes);
 	}
@@ -71,7 +71,7 @@ sub _init {
 }
 
 #method to read the requested data directly from a file in MogileFS
-sub _readRaw {
+sub _read {
 	my $self = shift;
 	my ($len, $offset, $output) = @_;
 
@@ -111,7 +111,7 @@ sub _readRaw {
 }
 
 #method to write the specified data to a file in MogileFS
-sub _writeRaw {
+sub _write {
 	my $self = shift;
 	my ($buf, $offset) = @_;
 
@@ -119,7 +119,7 @@ sub _writeRaw {
 	if(my $dest = $self->getOutputDest()) {
 		#short-circuit if an invalid buffer was provided
 		if(defined($buf) && ref($buf) ne 'SCALAR') {
-			$self->fuse->log(ERROR, 'Invalid buffer passed to _writeRaw');
+			$self->fuse->log(ERROR, 'Invalid buffer passed to _write');
 			$dest->{'error'} = 1;
 			die;
 		}
@@ -296,7 +296,7 @@ sub read {
 	my $self = shift;
 	my ($len, $offset) = @_;
 
-	return $self->_readRaw($len, $offset, $self->flags & (O_WRONLY | O_RDWR));
+	return $self->_read($len, $offset, $self->flags & (O_WRONLY | O_RDWR));
 }
 
 #method that will truncate this file to the specified byte
@@ -325,7 +325,7 @@ sub write {
 	$self->_cow($offset + length($$buf));
 
 	#write the raw data
-	return $self->_writeRaw($buf, $offset);
+	return $self->_write($buf, $offset);
 }
 
 1;
