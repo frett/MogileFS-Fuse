@@ -49,6 +49,10 @@ sub _cow {
 	return;
 }
 
+sub _flush {
+	return 1;
+}
+
 #method to initialize this file object
 sub _init {
 	my $self = shift;
@@ -165,7 +169,8 @@ sub close {
 		#copy any data that hasn't been copied yet
 		$self->_cow($self->{'cowPtr'} + 1024*1024) while(defined $self->{'cowPtr'});
 
-		#TODO: need to make sure there are no current writes happening (this should be probably be handled by flush eventually)
+		#flush the file handle before closing
+		$self->flush();
 
 		my $res = eval {
 			my $config = $self->fuse->{'config'};
@@ -195,6 +200,10 @@ sub close {
 
 sub flags {
 	return $_[0]->{'flags'};
+}
+
+sub flush {
+	return $_[0]->_flush();
 }
 
 sub fuse {
