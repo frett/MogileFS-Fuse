@@ -16,24 +16,7 @@ use Scalar::Util qw{blessed refaddr};
 ##Private static variables
 
 #variables to track the currently mounted Fuse object
-my $mountedObject :shared;
 my %unshared;
-
-##Fuse callback wrappers
-#TODO: this is a hack because the Fuse library doesn't support method callbacks or coderef callbacks in threads
-BEGIN {
-	no strict "refs";
-	foreach (CALLBACKS) {
-		my $callback = __PACKAGE__ . '::_' . $_;
-		my $method = 'fuse_' . $_;
-
-		*$callback = sub {
-			my $self = $mountedObject;
-			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'fuse_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')') if($self->{'config'}->{'loglevel'} >= DEBUG);
-			$self->$method(@_);
-		};
-	}
-}
 
 ##Static Methods
 
@@ -135,10 +118,23 @@ sub mount {
 	#short-circuit if a MogileFS file system is currently mounted
 	{
 		lock($self);
-		lock($mountedObject);
-		return if($self->{'mounted'} || $mountedObject);
+		return if($self->{'mounted'});
 		$self->{'mounted'} = 1;
-		$mountedObject = $self;
+	}
+
+	#generate closures for supported callbacks
+	my %callbacks;
+	foreach(CALLBACKS) {
+		#skip unsupported callbacks
+		my $method = 'fuse_' . $_;
+		next if(!$self->can($method));
+
+		#create closure for this callback
+		no strict "refs";
+		$callbacks{$_} = sub {
+			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'fuse_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')') if($self->{'config'}->{'loglevel'} >= DEBUG);
+			$self->$method(@_);
+		};
 	}
 
 	#mount the MogileFS file system
@@ -147,14 +143,12 @@ sub mount {
 		'threaded' => $self->{'config'}->{'threaded'},
 
 		#callback functions
-		(map {$_ => __PACKAGE__ . '::_' . $_} grep {$self->can('fuse_' . $_)} CALLBACKS),
+		%callbacks,
 	);
 
 	#reset mounted state
 	{
 		lock($self);
-		lock($mountedObject);
-		$mountedObject = undef;
 		$self->{'mounted'} = 0;
 	}
 
