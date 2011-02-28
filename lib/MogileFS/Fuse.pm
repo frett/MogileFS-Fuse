@@ -8,6 +8,7 @@ use Fcntl qw{O_WRONLY};
 use Fuse 0.11;
 use LWP;
 use MogileFS::Client;
+use MogileFS::Fuse::BufferedFile;
 use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
 use MogileFS::Fuse::File;
 use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR UNDEF};
@@ -21,6 +22,7 @@ my %unshared;
 ##Static Methods
 
 #constructor
+#	buffered   => boolean indicating if open file handles should utilize write buffering, defaults to true
 #	class      => the class to store files as in MogileFS
 #	domain     => the domain to use in MogileFS
 #	loglevel   => the log level to use for output
@@ -42,6 +44,7 @@ sub new {
 sub _init {
 	my $self = shift;
 	my %opt = validate(@_, {
+		'buffered'   => {'type' => BOOLEAN, 'default' => 1},
 		'class'      => {'type' => SCALAR | UNDEF, 'default' => undef},
 		'domain'     => {'type' => SCALAR},
 		'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
@@ -161,7 +164,13 @@ sub openFile {
 	my $self = shift;
 	my ($path, $flags) = @_;
 
-	return MogileFS::Fuse::File->new(
+	#pick the file class to use based on whether buffering is enabled or not
+	my $class =
+		$self->{'buffered'} ? 'MogileFS::Fuse::BufferedFile' :
+		'MogileFS::Fuse::File';
+
+	#create a file object for the file being opened
+	return $class->new(
 		'fuse'  => $self,
 		'path'  => $path,
 		'flags' => $flags,
