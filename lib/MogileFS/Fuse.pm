@@ -170,7 +170,7 @@ sub openFile {
 
 	#pick the file class to use based on whether buffering is enabled or not
 	my $class =
-		$self->{'buffered'} ? 'MogileFS::Fuse::BufferedFile' :
+		$self->{'config'}->{'buffered'} ? 'MogileFS::Fuse::BufferedFile' :
 		'MogileFS::Fuse::File';
 
 	#create a file object for the file being opened
