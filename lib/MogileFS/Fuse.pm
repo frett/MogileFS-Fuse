@@ -5,7 +5,7 @@ use threads::shared;
 
 use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
 use Fcntl qw{O_WRONLY};
-use Fuse 0.09_4;
+use Fuse 0.11;
 use LWP;
 use MogileFS::Client;
 use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
@@ -95,15 +95,6 @@ sub CLONE {
 	#destroy all unshared objects to prevent non-threadsafe objects from being accessed by multiple threads
 	%unshared = ();
 	return 1;
-}
-
-#method that will look up the requested file
-sub find_file {
-	my $self = shift;
-	my ($file) = @_;
-	$file = $self->{'files'}->{$file} if(!blessed($file));
-	$self->log(ERROR, 'Something went wrong finding a file') if(!defined $file);
-	return $file;
 }
 
 #return the instance id for this object
@@ -257,15 +248,15 @@ sub e_open {
 		$files->{$file->id} = $file;
 	};
 
-	#return success and the open file id
-	return 0, $file->id;
+	#return success and the open file handle
+	return 0, $file;
 }
 
 sub e_read {
 	my $self = shift;
 	my ($path, $len, $off, $file) = @_;
 
-	my $buf = eval{$self->find_file($file)->read($len, $off)};
+	my $buf = eval{$file->read($len, $off)};
 	return -EIO() if($@);
 
 	return defined($buf) ? $$buf : '';
@@ -278,7 +269,6 @@ sub e_readlink {
 sub e_release    {
 	my $self = shift;
 	my ($path, $flags, $file) = @_;
-	$file = $self->find_file($file);
 
 	eval {
 		delete $self->{'files'}->{$file->id};
@@ -346,9 +336,9 @@ sub e_write {
 	my $self = shift;
 	my $buf = \$_[1];
 	my $offset = $_[2];
-	my $file = $self->find_file($_[3]);
+	my $file = $_[3];
 
-	my $bytesWritten = eval{$self->find_file($file)->write($buf, $offset)};
+	my $bytesWritten = eval{$file->write($buf, $offset)};
 	return -EIO() if($@);
 
 	return $bytesWritten;
