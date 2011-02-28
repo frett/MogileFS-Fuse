@@ -205,6 +205,16 @@ sub ua {
 
 ##Callback Functions
 
+sub e_flush {
+	my $self = shift;
+	my ($path, $file) = @_;
+
+	eval {$file->flush()};
+	return -EIO() if($@);
+
+	return 0;
+}
+
 sub e_getattr {
 	return -EOPNOTSUPP();
 }
