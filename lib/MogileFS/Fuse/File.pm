@@ -41,7 +41,7 @@ sub _cow {
 		$bufSize = $limit - $self->{'cowPtr'} if(defined($limit) && $self->{'cowPtr'} + $bufSize > $limit);
 
 		#copy a block of data
-		my $bytes = $self->_write($self->_read($bufSize, $self->{'cowPtr'}), $self->{'cowPtr'});
+		my $bytes = $self->_write($self->{'cowPtr'}, $self->_read($self->{'cowPtr'}, $bufSize));
 		$self->{'cowPtr'} += $bytes;
 		delete $self->{'cowPtr'} if(!$bytes);
 	}
@@ -71,18 +71,16 @@ sub _init {
 }
 
 #method to read the requested data directly from a file in MogileFS
+#	output => is this read request being performed on an output file instead of an input file
 sub _read {
 	my $self = shift;
-	my ($len, $offset, $output) = @_;
-
-	#make sure the read request from the output file is satisfiable
-	$self->_cow($offset + $len) if($output);
+	my ($offset, $len, %opt) = @_;
 
 	#iterate over all paths attempting to read data
 	my $ua = $self->fuse->ua;
 	my $headers = ['Range' => 'bytes=' . $offset . '-' . ($offset + $len - 1)];
 	my $res;
-	foreach my $uri ($output ? $self->getOutputDest->{'path'} : $self->getPaths()) {
+	foreach my $uri ($opt{'output'} ? $self->getOutputDest->{'path'} : $self->getPaths()) {
 		#attempt retrieving the requested data
 		$res = $ua->request(HTTP::Request->new('GET' => $uri, $headers));
 
@@ -113,7 +111,7 @@ sub _read {
 #method to write the specified data to a file in MogileFS
 sub _write {
 	my $self = shift;
-	my ($buf, $offset) = @_;
+	my ($offset, $buf) = @_;
 
 	#attempt writing the buffer to the output destination
 	if(my $dest = $self->getOutputDest()) {
@@ -295,8 +293,14 @@ sub path {
 sub read {
 	my $self = shift;
 	my ($len, $offset) = @_;
+	my $output = $self->flags & (O_WRONLY | O_RDWR);
 
-	return $self->_read($len, $offset, $self->flags & (O_WRONLY | O_RDWR));
+	#make sure the read request from the output file is satisfiable
+	$self->_cow($offset + $len) if($output);
+
+	return $self->_read($offset, $len,
+		'output' => $output,
+	);
 }
 
 #method that will truncate this file to the specified byte
@@ -325,7 +329,7 @@ sub write {
 	$self->_cow($offset + length($$buf));
 
 	#write the raw data
-	return $self->_write($buf, $offset);
+	return $self->_write($offset, $buf);
 }
 
 1;
