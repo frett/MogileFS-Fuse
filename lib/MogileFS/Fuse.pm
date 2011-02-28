@@ -25,11 +25,11 @@ BEGIN {
 	no strict "refs";
 	foreach (CALLBACKS) {
 		my $callback = __PACKAGE__ . '::_' . $_;
-		my $method = 'e_' . $_;
+		my $method = 'fuse_' . $_;
 
 		*$callback = sub {
 			my $self = $mountedObject;
-			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'e_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')') if($self->{'config'}->{'loglevel'} >= DEBUG);
+			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'fuse_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')') if($self->{'config'}->{'loglevel'} >= DEBUG);
 			$self->$method(@_);
 		};
 	}
@@ -147,7 +147,7 @@ sub mount {
 		'threaded' => $self->{'config'}->{'threaded'},
 
 		#callback functions
-		(map {$_ => __PACKAGE__ . '::_' . $_} grep {$self->can('e_' . $_)} CALLBACKS),
+		(map {$_ => __PACKAGE__ . '::_' . $_} grep {$self->can('fuse_' . $_)} CALLBACKS),
 	);
 
 	#reset mounted state
@@ -205,7 +205,7 @@ sub ua {
 
 ##Callback Functions
 
-sub e_flush {
+sub fuse_flush {
 	my $self = shift;
 	my ($path, $file) = @_;
 
@@ -215,19 +215,19 @@ sub e_flush {
 	return 0;
 }
 
-sub e_getattr {
+sub fuse_getattr {
 	return -EOPNOTSUPP();
 }
 
-sub e_getdir {
+sub fuse_getdir {
 	return -EOPNOTSUPP();
 }
 
-sub e_link {
+sub fuse_link {
 	return -EOPNOTSUPP();
 }
 
-sub e_mknod {
+sub fuse_mknod {
 	my $self = shift;
 	my ($path) = @_;
 	$path = $self->sanitize_path($path);
@@ -240,7 +240,7 @@ sub e_mknod {
 	return 0;
 }
 
-sub e_open {
+sub fuse_open {
 	my $self = shift;
 	my ($path, $flags) = @_;
 	$path = $self->sanitize_path($path);
@@ -262,7 +262,7 @@ sub e_open {
 	return 0, $file;
 }
 
-sub e_read {
+sub fuse_read {
 	my $self = shift;
 	my ($path, $len, $off, $file) = @_;
 
@@ -272,11 +272,11 @@ sub e_read {
 	return defined($buf) ? $$buf : '';
 }
 
-sub e_readlink {
+sub fuse_readlink {
 	return 0;
 }
 
-sub e_release    {
+sub fuse_release    {
 	my $self = shift;
 	my ($path, $flags, $file) = @_;
 
@@ -289,19 +289,19 @@ sub e_release    {
 	return 0;
 }
 
-sub e_rename {
+sub fuse_rename {
 	return -EOPNOTSUPP();
 }
 
-sub e_statfs {
+sub fuse_statfs {
 	return 255, 1, 1, 1, 1, 1024;
 }
 
-sub e_symlink {
+sub fuse_symlink {
 	return -EOPNOTSUPP();
 }
 
-sub e_truncate {
+sub fuse_truncate {
 	my $self = shift;
 	my ($path, $size) = @_;
 
@@ -317,7 +317,7 @@ sub e_truncate {
 	return 0;
 }
 
-sub e_unlink {
+sub fuse_unlink {
 	my $self = shift;
 	my ($path) = @_;
 	$path = $self->sanitize_path($path);
@@ -342,7 +342,7 @@ sub e_unlink {
 	return 0;
 }
 
-sub e_write {
+sub fuse_write {
 	my $self = shift;
 	my $buf = \$_[1];
 	my $offset = $_[2];

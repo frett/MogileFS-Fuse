@@ -59,7 +59,7 @@ sub MogileFS {
 
 ##Fuse callbacks
 
-sub e_getattr {
+sub fuse_getattr {
 	my $self = shift;
 	my ($path) = @_;
 	$path = $self->sanitize_path($path);
@@ -99,7 +99,7 @@ sub e_getattr {
 	);
 }
 
-sub e_getdir {
+sub fuse_getdir {
 	my $self = shift;
 	my ($path) = @_;
 	$path = $self->sanitize_path($path);
@@ -112,7 +112,7 @@ sub e_getdir {
 	return ('.', '..', map {$_->{'name'}} @files), 0;
 }
 
-sub e_mkdir {
+sub fuse_mkdir {
 	my $self = shift;
 	my ($path, $mode) = @_;
 	$path = $self->sanitize_path($path);
@@ -132,7 +132,7 @@ sub e_mkdir {
 	return 0;
 }
 
-sub e_rename {
+sub fuse_rename {
 	my $self = shift;
 	my ($old, $new) = @_;
 	$old = $self->sanitize_path($old);
