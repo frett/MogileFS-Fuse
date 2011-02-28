@@ -149,6 +149,10 @@ sub mount {
 		%callbacks,
 	);
 
+	#close and release any files that are still open
+	eval{$_->close()} foreach(values %{$self->{'files'}});
+	$self->{'files'} = shared_clone({});
+
 	#reset mounted state
 	{
 		lock($self);
