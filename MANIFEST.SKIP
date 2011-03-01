@@ -1,0 +1,16 @@
+# version control meta-data
+^\.git/
+^\.gitignore
+
+# build generated files
+^_build/
+^Build$
+^MYMETA.yml$
+
+# temporary files
+\.bak$
+
+# distribution related files
+^MANIFEST\.SKIP$
+^MogileFS-Fuse-v[\d\.\_]+
+\.tar\.gz$

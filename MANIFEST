@@ -1,0 +1,9 @@
+Build.PL
+lib/MogileFS/Fuse.pm
+lib/MogileFS/Fuse/BufferedFile.pm
+lib/MogileFS/Fuse/Constants.pm
+lib/MogileFS/Fuse/File.pm
+lib/MogileFS/Fuse/FilePaths.pm
+LICENSE
+MANIFEST			This list of files
+META.yml
