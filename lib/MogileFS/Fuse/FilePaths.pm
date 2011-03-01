@@ -3,6 +3,8 @@ package MogileFS::Fuse::FilePaths;
 use strict;
 use base qw{MogileFS::Fuse};
 
+our $VERSION = v0.0.1;
+
 use Errno qw{EEXIST EIO ENOENT};
 use MogileFS::Client::FilePaths;
 use MogileFS::Fuse::Constants qw{:LEVELS};

@@ -3,6 +3,8 @@ package MogileFS::Fuse::File;
 use strict;
 use threads::shared;
 
+our $VERSION = v0.0.1;
+
 use Errno qw{EIO};
 use Fcntl;
 use HTTP::Request;
