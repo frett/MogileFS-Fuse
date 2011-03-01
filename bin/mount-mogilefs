@@ -10,26 +10,30 @@ my %opt = (
 	'loglevel'   => 0,
 	'trackers'   => [],
 	'threaded'   => 1,
+	'mountopts'  => [],
 	'mountpoint' => undef,
 );
 my $resp = GetOptions(
-	'class=s'    => \$opt{'class'},
-	'domain=s'   => \$opt{'domain'},
-	'threaded!'  => \$opt{'threaded'},
-	'tracker=s@' => \$opt{'trackers'},
-	'verbose+'   => \$opt{'loglevel'},
+	'class=s'     => \$opt{'class'},
+	'domain=s'    => \$opt{'domain'},
+	'mountopt=s@' => \$opt{'mountopts'},
+	'threaded!'   => \$opt{'threaded'},
+	'tracker=s@'  => \$opt{'trackers'},
+	'verbose+'    => \$opt{'loglevel'},
 );
 $opt{'mountpoint'} = shift @ARGV if(@ARGV);
 
-#output usage if script was called incorrectly
-if(!$resp || !defined($opt{'mountpoint'})) {
-#	displayUsage();
-	exit;
-}
+#turn mountopts into a comma-separated list for Fuse
+$opt{'mountopts'} = join(',', @{$opt{'mountopts'}});
 
 #process any comma-separated trackers specified and set a default tracker if none were specified
 @{$opt{'trackers'}} = split(/,/, join(',', @{$opt{'trackers'}}));
 push @{$opt{'trackers'}}, '127.0.0.1:7001' if(!@{$opt{'trackers'}});
+
+#output usage if script was called incorrectly
+if(!$resp || !defined($opt{'mountpoint'})) {
+	exit;
+}
 
 #load threads only if threads are supported by the current perl
 if($opt{'threaded'}) {

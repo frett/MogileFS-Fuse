@@ -28,6 +28,7 @@ my %unshared;
 #	class      => the class to store files as in MogileFS
 #	domain     => the domain to use in MogileFS
 #	loglevel   => the log level to use for output
+#	mountopts  => options to use when mounting the Fuse filesystem
 #	mountpoint => where to mount the filesystem
 #	threaded   => flag indicating if this MogileFS file system should be threaded or not
 #	trackers   => the addresses for the MogileFS trackers
@@ -50,6 +51,7 @@ sub _init {
 		'class'      => {'type' => SCALAR | UNDEF, 'default' => undef},
 		'domain'     => {'type' => SCALAR},
 		'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
+		'mountopts'  => {'type' => SCALAR | UNDEF, 'default' => undef},
 		'mountpoint' => {'type' => SCALAR},
 		'threaded'   => {'type' => BOOLEAN, 'default' => $threads::threads},
 		'trackers'   => {'type' => ARRAYREF},
@@ -144,8 +146,9 @@ sub mount {
 
 	#mount the MogileFS file system
 	Fuse::main(
+		'mountopts'  => $self->{'config'}->{'mountopts'},
 		'mountpoint' => $self->{'config'}->{'mountpoint'},
-		'threaded' => $self->{'config'}->{'threaded'},
+		'threaded'   => $self->{'config'}->{'threaded'},
 
 		#callback functions
 		%callbacks,
