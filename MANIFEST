@@ -1,3 +1,4 @@
+bin/mount-mogilefs
 Build.PL
 lib/MogileFS/Fuse.pm
 lib/MogileFS/Fuse/BufferedFile.pm
