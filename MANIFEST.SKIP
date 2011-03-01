@@ -5,6 +5,7 @@
 # build generated files
 ^_build/
 ^Build$
+^blib/
 ^MYMETA.yml$
 
 # temporary files

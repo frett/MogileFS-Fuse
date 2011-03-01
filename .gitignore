@@ -1,4 +1,5 @@
 /_build/
+/blib/
 /Build
 /MANIFEST.bak
 /MANIFEST.SKIP.bak
