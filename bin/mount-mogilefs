@@ -37,6 +37,9 @@ if(!$resp || !defined($opt{'mountpoint'})) {
 	exit 1;
 }
 
+#Rename the process for the process list
+$0 = $0 . ' [' . $opt{'mountpoint'} . ']';
+
 #daemonize if requested
 daemonize() if(delete $opt{'daemonize'});
 
