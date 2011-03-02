@@ -8,3 +8,4 @@ lib/MogileFS/Fuse/FilePaths.pm
 LICENSE
 MANIFEST			This list of files
 META.yml
+scripts/mogilefuse-init.d
