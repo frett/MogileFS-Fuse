@@ -6,6 +6,7 @@ use Module::Build;
 
 Module::Build->new(
 	'module_name'        => 'MogileFS::Fuse',
+	'create_makefile_pl' => 'traditional',
 	'dist_abstract'      => 'Fuse binding for MogileFS',
 	'license'            => 'mit',
 	'configure_requires' => {
