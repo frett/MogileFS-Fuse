@@ -6,6 +6,7 @@ use strict;
 use Getopt::Long;
 my %opt = (
 	'class'      => undef,
+	'daemonize'  => 0,
 	'domain'     => '',
 	'loglevel'   => 0,
 	'trackers'   => [],
@@ -15,6 +16,7 @@ my %opt = (
 );
 my $resp = GetOptions(
 	'class=s'     => \$opt{'class'},
+	'daemon'      => \$opt{'daemonize'},
 	'domain=s'    => \$opt{'domain'},
 	'mountopt=s@' => \$opt{'mountopts'},
 	'threaded!'   => \$opt{'threaded'},
@@ -35,6 +37,9 @@ if(!$resp || !defined($opt{'mountpoint'})) {
 	exit 1;
 }
 
+#daemonize if requested
+daemonize() if(delete $opt{'daemonize'});
+
 #load threads only if threads are supported by the current perl
 if($opt{'threaded'}) {
 	require Config;
@@ -44,3 +49,32 @@ if($opt{'threaded'}) {
 #load MogileFS::Fuse and mount the file system
 require MogileFS::Fuse::FilePaths;
 MogileFS::Fuse::FilePaths->new(%opt)->mount();
+
+#function to daemonize this script
+#based on code from http://perlmonks.org/index.pl?node=144812 and MogileFS::Util::daemonize
+sub daemonize {
+	require POSIX;
+
+	#
+	# First-generation child.
+	#
+	my $child = fork;
+	exit 0 if($child);
+	POSIX::setsid();
+	close(STDIN);
+	close(STDOUT);
+	close(STDERR);
+	chdir('/');
+	umask(0);
+	$SIG{$_} = 'IGNORE' foreach(grep {exists $SIG{$_}} qw{TSTP TTIN TTOU});
+
+	#
+	# In case of SysV, re-spawn to avoid danger of re-acquiring a control
+	# terminal. Now the child is not a process group leader.
+	#
+	$SIG{'HUP'} = 'IGNORE';
+	my $child = fork;
+	exit 0 if($child);
+
+	return;
+}
