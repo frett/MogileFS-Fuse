@@ -42,6 +42,7 @@ sub _init {
 
 	#initialize the base object
 	$self = $self->next::method(%opt);
+	return if(!$self);
 
 	#setup the buffer data structure
 	$self->{'buffer'} = shared_clone({
