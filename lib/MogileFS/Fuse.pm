@@ -217,11 +217,11 @@ sub ua {
 
 ##Callback Functions
 
-sub fuse_flush {
+sub fuse_fsync {
 	my $self = shift;
-	my ($path, $file) = @_;
+	my ($path, $flags, $file) = @_;
 
-	eval {$file->flush()};
+	eval {$file->fsync()};
 	return -EIO() if($@);
 
 	return 0;

@@ -51,7 +51,7 @@ sub _cow {
 	return;
 }
 
-sub _flush {
+sub _fsync {
 	return 1;
 }
 
@@ -172,7 +172,7 @@ sub close {
 		$self->_cow($self->{'cowPtr'} + 1024*1024) while(defined $self->{'cowPtr'});
 
 		#flush the file handle before closing
-		$self->flush();
+		$self->fsync();
 
 		my $res = eval {
 			my $config = $self->fuse->{'config'};
@@ -204,8 +204,8 @@ sub flags {
 	return $_[0]->{'flags'};
 }
 
-sub flush {
-	return $_[0]->_flush();
+sub fsync {
+	return $_[0]->_fsync();
 }
 
 sub fuse {
