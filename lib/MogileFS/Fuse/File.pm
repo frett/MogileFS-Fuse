@@ -51,6 +51,43 @@ sub _cow {
 	return;
 }
 
+sub _flush {
+	my $self = shift;
+
+	#copy any data that hasn't been copied yet and fsync any buffers
+	$self->_cow($self->{'cowPtr'} + 1024*1024) while(defined $self->{'cowPtr'});
+	$self->fsync();
+
+	#commit the output file
+	my $dest = $self->getOutputDest();
+	my $res = eval {
+		my $config = $self->fuse->{'config'};
+		$self->MogileFS->{'backend'}->do_request('create_close', {
+			'fid'    => $dest->{'fid'},
+			'devid'  => $dest->{'devid'},
+			'domain' => $config->{'domain'},
+			'size'   => $dest->{'size'},
+			'key'    => ($dest->{'error'} ? '' : $self->path),
+			'path'   => $dest->{'path'},
+
+			# these attributes are specific to MogileFS::Client::FilePaths which utilizes the MetaData MogileFS plugin
+			#TODO: move this into a FilePaths specific file object
+			'plugin.meta.keys'   => 1,
+			'plugin.meta.key0'   => 'mtime',
+			'plugin.meta.value0' => scalar time,
+		});
+	};
+	if($@ || !$res || $dest->{'error'}) {
+		$self->fuse->log(ERROR, 'Error flushing file: ' . $self->path);
+		die;
+	}
+
+	#reinitialize I/O attributes
+	$self->_initIo;
+
+	return;
+}
+
 sub _fsync {
 	return 1;
 }
@@ -66,14 +103,41 @@ sub _init {
 	$self->{'id'} = is_shared($self) || refaddr($self);
 	$self->{'path'} = $opt{'path'};
 
+	#initialize the I/O attributes
+	$self->_initIo;
+
 	#short-circuit if the file isn't opened for writing and doesn't exist in MogileFS
 	return if(!($self->flags & (O_WRONLY | O_RDWR)) && !$self->getPaths());
 
-	#initialize the cow pointer for COW when the file is in write mode and a previous version exists
-	$self->{'cowPtr'} = 0 if($self->flags & (O_WRONLY | O_RDWR) && $self->getPaths());
-
 	#return the initialized object
 	return $self;
+}
+
+#method that will (re)initialize various I/O related attributes
+sub _initIo {
+	my $self = shift;
+
+	#delete any existing I/O
+	delete $self->{'paths'};
+	delete $self->{'dest'};
+	delete $self->{'cowPtr'};
+	delete $self->{'dirtyOutput'};
+
+	#preset a couple values when we are writing a file
+	if($self->flags & (O_WRONLY | O_RDWR)) {
+		#a previous version exists
+		if($self->getPaths()) {
+			#initialize the cow pointer for COW
+			$self->{'cowPtr'} = 0;
+		}
+		#no previous version exists
+		else {
+			#set dirtyOutput to guarantee a flush
+			$self->{'dirtyOutput'} = 1 if(!$self->getPaths());
+		}
+	}
+
+	return;
 }
 
 #method to read the requested data directly from a file in MogileFS
@@ -161,47 +225,19 @@ sub _write {
 	}
 }
 
-sub close {
+sub flags {
+	return $_[0]->{'flags'};
+}
+
+sub flush {
 	my $self = shift;
 
-	#close an open output handle if we are in a write mode
-	if($self->flags & (O_WRONLY | O_RDWR)) {
-		my $dest = $self->getOutputDest();
-
-		#copy any data that hasn't been copied yet
-		$self->_cow($self->{'cowPtr'} + 1024*1024) while(defined $self->{'cowPtr'});
-
-		#flush the file handle before closing
-		$self->fsync();
-
-		my $res = eval {
-			my $config = $self->fuse->{'config'};
-			$self->MogileFS->{'backend'}->do_request('create_close', {
-				'fid'    => $dest->{'fid'},
-				'devid'  => $dest->{'devid'},
-				'domain' => $config->{'domain'},
-				'size'   => $dest->{'size'},
-				'key'    => ($dest->{'error'} ? '' : $self->path),
-				'path'   => $dest->{'path'},
-
-				# these attributes are specific to MogileFS::Client::FilePaths which utilizes the MetaData MogileFS plugin
-				#TODO: move this into a FilePaths specific file object
-				'plugin.meta.keys'   => 1,
-				'plugin.meta.key0'   => 'mtime',
-				'plugin.meta.value0' => scalar time,
-			});
-		};
-		if($@ || !$res) {
-			$self->fuse->log(ERROR, 'Error closing open file: ' . $self->path);
-			die;
-		}
+	#flush the current I/O handles if we are in a write mode and the output file is dirty
+	if($self->flags & (O_WRONLY | O_RDWR) && $self->{'dirtyOutput'}) {
+		$self->_flush();
 	}
 
 	return;
-}
-
-sub flags {
-	return $_[0]->{'flags'};
 }
 
 sub fsync {
@@ -279,7 +315,7 @@ sub getPaths {
 					$? = $mogc->errcode || -1;
 					$! = $mogc->errstr || '';
 				}
-				$self->fuse->log(ERROR, 'Error opening file: ' . $? . ': ' . $!);
+				$self->fuse->log(ERROR, 'Error retrieving paths for file: ' . $? . ': ' . $!);
 				die;
 			}
 		}
@@ -314,6 +350,15 @@ sub read {
 	);
 }
 
+sub release {
+	my $self = shift;
+
+	#force a final flush
+	$self->flush();
+
+	return;
+}
+
 #method that will truncate this file to the specified byte
 sub truncate {
 	my $self = shift;
@@ -326,6 +371,7 @@ sub truncate {
 	}
 
 	#copy up to $size bytes of the file
+	$self->{'dirtyOutput'} = 1;
 	$self->_cow($size, $size);
 	delete $self->{'cowPtr'};
 
@@ -336,8 +382,15 @@ sub write {
 	my $self = shift;
 	my ($buf, $offset) = @_;
 
+	#short-circuit if no data is actually being written
+	my $len = length($$buf);
+	return 0 if($len <= 0);
+
+	#mark the output file as being updated
+	$self->{'dirtyOutput'} = 1;
+
 	#make sure data is copied from the old file past the specified write buffer
-	$self->_cow($offset + length($$buf));
+	$self->_cow($offset + $len);
 
 	#write the raw data
 	return $self->_write($offset, $buf);

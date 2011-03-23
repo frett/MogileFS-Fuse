@@ -154,8 +154,8 @@ sub mount {
 		%callbacks,
 	);
 
-	#close and release any files that are still open
-	eval{$_->close()} foreach(values %{$self->{'files'}});
+	#release any files that are still active
+	eval{$_->release()} foreach(values %{$self->{'files'}});
 	$self->{'files'} = shared_clone({});
 
 	#reset mounted state
@@ -217,6 +217,16 @@ sub ua {
 
 ##Callback Functions
 
+sub fuse_flush {
+	my $self = shift;
+	my ($path, $file) = @_;
+
+	eval {$file->flush()};
+	return -EIO() if($@);
+
+	return 0;
+}
+
 sub fuse_fsync {
 	my $self = shift;
 	my ($path, $flags, $file) = @_;
@@ -245,7 +255,7 @@ sub fuse_mknod {
 	$path = $self->sanitize_path($path);
 
 	#attempt creating an empty file
-	eval {$self->openFile($path, O_WRONLY)->close()};
+	eval {$self->openFile($path, O_WRONLY)->release()};
 	return -EIO() if($@);
 
 	#return success
@@ -288,13 +298,16 @@ sub fuse_readlink {
 	return 0;
 }
 
-sub fuse_release    {
+sub fuse_release {
 	my $self = shift;
 	my ($path, $flags, $file) = @_;
 
 	eval {
+		#remove the file from the list of active file handles
 		delete $self->{'files'}->{$file->id};
-		$file->close();
+
+		#release the file handle
+		$file->release();
 	};
 	return -EIO() if($@);
 
@@ -321,7 +334,7 @@ sub fuse_truncate {
 	eval{
 		my $file = $self->openFile($path, O_WRONLY);
 		$file->truncate($size);
-		$file->close;
+		$file->release;
 	};
 	return -EIO() if($@);
 
