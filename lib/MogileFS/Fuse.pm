@@ -5,15 +5,13 @@ use threads::shared;
 
 our $VERSION = v0.0.1;
 
-use constant THREADS => $threads::threads;
-
 use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
 use Fcntl qw{O_WRONLY};
 use Fuse 0.11;
 use LWP;
 use MogileFS::Client;
 use MogileFS::Fuse::BufferedFile;
-use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS};
+use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS THREADS};
 use MogileFS::Fuse::File;
 use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR UNDEF};
 use Scalar::Util qw{blessed refaddr};

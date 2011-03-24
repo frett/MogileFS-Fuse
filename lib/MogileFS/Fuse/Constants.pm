@@ -13,10 +13,14 @@ use constant CALLBACKS => qw{
 use constant ERROR => 0;
 use constant DEBUG => 1;
 
+#are threads enabled
+use constant THREADS => $threads::threads;
+
 our @EXPORT_OK = qw{
 	CALLBACKS
 	ERROR
 	DEBUG
+	THREADS
 };
 our %EXPORT_TAGS = (
 	LEVELS => [qw{
