@@ -47,6 +47,24 @@ sub new {
 
 #return the config for this MogileFS::Fuse object
 sub _config {
+	#cache the config in the local thread for faster access if threads are loaded
+	if(THREADS) {
+		my $config = $_[0]->_localElem('config');
+
+		#copy the config to a local thread cache of it
+		if(!defined $config) {
+			#do a shallow copy of the config
+			$config = {%{$_[0]->{'config'}}};
+
+			#store the shallow copy
+			$_[0]->_localElem('config', $config);
+		}
+
+		#return the local cache of this object's config
+		return $config;
+	}
+
+	#default to returning the noncached config
 	return $_[0]->{'config'};
 }
 
