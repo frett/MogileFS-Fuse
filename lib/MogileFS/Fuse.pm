@@ -5,6 +5,8 @@ use threads::shared;
 
 our $VERSION = v0.0.1;
 
+use constant THREADS => $threads::threads;
+
 use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
 use Fcntl qw{O_WRONLY};
 use Fuse 0.11;
@@ -58,7 +60,7 @@ sub _init {
 		'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
 		'mountopts'  => {'type' => SCALAR | UNDEF, 'default' => undef},
 		'mountpoint' => {'type' => SCALAR},
-		'threaded'   => {'type' => BOOLEAN, 'default' => $threads::threads},
+		'threaded'   => {'type' => BOOLEAN, 'default' => THREADS},
 		'trackers'   => {'type' => ARRAYREF},
 	});
 
