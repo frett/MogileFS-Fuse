@@ -61,7 +61,7 @@ sub _flush {
 	#commit the output file
 	my $dest = $self->getOutputDest();
 	my $res = eval {
-		my $config = $self->fuse->{'config'};
+		my $config = $self->fuse->_config;
 		$self->MogileFS->{'backend'}->do_request('create_close', {
 			'fid'    => $dest->{'fid'},
 			'devid'  => $dest->{'devid'},
@@ -260,7 +260,7 @@ sub getOutputDest {
 		if(!$self->{'dest'}) {
 			#create a new temporary file in MogileFS
 			my $tmpFile = eval{
-				my $config = $self->fuse->{'config'};
+				my $config = $self->fuse->_config;
 				$self->MogileFS->{'backend'}->do_request('create_open', {
 					'domain'     => $config->{'domain'},
 					'class'      => $config->{'class'},

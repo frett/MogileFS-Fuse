@@ -47,7 +47,7 @@ sub MogileFS {
 
 	#create and store a new client if one doesn't exist already
 	if(!defined $client) {
-		my $config = $_[0]->{'config'};
+		my $config = $_[0]->_config;
 		$client = MogileFS::Client::FilePaths->new(
 			'hosts'  => [@{$config->{'trackers'}}],
 			'domain' => $config->{'domain'},
@@ -123,7 +123,7 @@ sub fuse_mkdir {
 	eval{
 		my $file = $path . '/.mkdir_tmp_' . join('', map {chr(int(rand(26)) + 97)} (0..9));
 		my $mogc = $self->MogileFS();
-		die unless($mogc->new_file($file, $self->{'config'}->{'class'})->close);
+		die unless($mogc->new_file($file, $self->_config->{'class'})->close);
 		$mogc->delete($file);
 	};
 	if($@) {

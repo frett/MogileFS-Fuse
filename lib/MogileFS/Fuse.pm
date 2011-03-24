@@ -43,6 +43,11 @@ sub new {
 
 ##Instance Methods
 
+#return the config for this MogileFS::Fuse object
+sub _config {
+	return $_[0]->{'config'};
+}
+
 #method that will initialize the MogileFS::Fuse object
 sub _init {
 	my $self = shift;
@@ -96,7 +101,7 @@ sub id {
 sub log {
 	my $self = shift;
 	my ($level, $msg) = @_;
-	return if($level > $self->{'config'}->{'loglevel'});
+	return if($level > $self->_config->{'loglevel'});
 	print STDERR $msg, "\n";
 }
 
@@ -106,7 +111,7 @@ sub MogileFS {
 
 	#create and store a new client if one doesn't exist already
 	if(!defined $client) {
-		my $config = $_[0]->{'config'};
+		my $config = $_[0]->_config;
 		$client = MogileFS::Client->new(
 			'hosts'  => [@{$config->{'trackers'}}],
 			'domain' => $config->{'domain'},
@@ -139,16 +144,16 @@ sub mount {
 		#create closure for this callback
 		no strict "refs";
 		$callbacks{$_} = sub {
-			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'fuse_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')') if($self->{'config'}->{'loglevel'} >= DEBUG);
+			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'fuse_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')') if($self->_config->{'loglevel'} >= DEBUG);
 			$self->$method(@_);
 		};
 	}
 
 	#mount the MogileFS file system
 	Fuse::main(
-		'mountopts'  => $self->{'config'}->{'mountopts'},
-		'mountpoint' => $self->{'config'}->{'mountpoint'},
-		'threaded'   => $self->{'config'}->{'threaded'},
+		'mountopts'  => $self->_config->{'mountopts'},
+		'mountpoint' => $self->_config->{'mountpoint'},
+		'threaded'   => $self->_config->{'threaded'},
 
 		#callback functions
 		%callbacks,
@@ -175,7 +180,7 @@ sub openFile {
 
 	#pick the file class to use based on whether buffering is enabled or not
 	my $class =
-		$self->{'config'}->{'buffered'} ? 'MogileFS::Fuse::BufferedFile' :
+		$self->_config->{'buffered'} ? 'MogileFS::Fuse::BufferedFile' :
 		'MogileFS::Fuse::File';
 
 	#create a file object for the file being opened
