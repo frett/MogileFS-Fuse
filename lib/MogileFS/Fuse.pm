@@ -58,7 +58,7 @@ sub _init {
 	});
 
 	#die horribly if we are trying to reinit an existing object
-	die 'You are trying to reinitialize an existing MogileFS::Fuse object, this could introduce race conditions and is unsupported' if($self->{'id'});
+	die 'You are trying to reinitialize an existing MogileFS::Fuse object, this could introduce race conditions and is unsupported' if($self->{'initialized'});
 
 	#disable threads if they aren't loaded
 	$opt{'threaded'} = 0 if(!$threads::threads);
@@ -66,7 +66,7 @@ sub _init {
 	#initialize this object
 	$self->{'config'} = shared_clone({%opt});
 	$self->{'files'} = shared_clone({});
-	$self->{'id'} = is_shared($self) || refaddr($self);
+	$self->{'initialized'} = 1;
 
 	#return the initialized object
 	return $self;
@@ -89,7 +89,7 @@ sub CLONE {
 
 #return the instance id for this object
 sub id {
-	return $_[0]->{'id'};
+	return is_shared($_[0]) || refaddr($_[0]);
 }
 
 #function that will output a log message
