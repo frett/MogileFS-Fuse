@@ -352,6 +352,7 @@ sub fuse_symlink {
 sub fuse_truncate {
 	my $self = shift;
 	my ($path, $size) = @_;
+	$path = $self->sanitize_path($path);
 
 	#attempt to truncate the specified file
 	eval{
