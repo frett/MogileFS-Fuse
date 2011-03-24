@@ -13,7 +13,7 @@ use MogileFS::Client;
 use MogileFS::Fuse::BufferedFile;
 use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS THREADS};
 use MogileFS::Fuse::File;
-use Params::Validate qw{validate ARRAYREF BOOLEAN SCALAR UNDEF};
+use Params::Validate qw{validate_with ARRAYREF BOOLEAN SCALAR UNDEF};
 use Scalar::Util qw{blessed refaddr};
 
 ##Private static variables
@@ -69,16 +69,20 @@ sub _config {
 #method that will initialize the MogileFS::Fuse object
 sub _init {
 	my $self = shift;
-	my %opt = validate(@_, {
-		'buffered'   => {'type' => BOOLEAN, 'default' => 1},
-		'class'      => {'type' => SCALAR | UNDEF, 'default' => undef},
-		'domain'     => {'type' => SCALAR},
-		'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
-		'mountopts'  => {'type' => SCALAR | UNDEF, 'default' => undef},
-		'mountpoint' => {'type' => SCALAR},
-		'threaded'   => {'type' => BOOLEAN, 'default' => THREADS},
-		'trackers'   => {'type' => ARRAYREF},
-	});
+	my %opt = validate_with(
+		'allow_extra' => 1,
+		'params' => \@_,
+		'spec'   => {
+			'buffered'   => {'type' => BOOLEAN, 'default' => 1},
+			'class'      => {'type' => SCALAR | UNDEF, 'default' => undef},
+			'domain'     => {'type' => SCALAR},
+			'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
+			'mountopts'  => {'type' => SCALAR | UNDEF, 'default' => undef},
+			'mountpoint' => {'type' => SCALAR},
+			'threaded'   => {'type' => BOOLEAN, 'default' => THREADS},
+			'trackers'   => {'type' => ARRAYREF},
+		},
+	);
 
 	#die horribly if we are trying to reinit an existing object
 	die 'You are trying to reinitialize an existing MogileFS::Fuse object, this could introduce race conditions and is unsupported' if($self->{'initialized'});
