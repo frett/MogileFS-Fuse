@@ -116,11 +116,11 @@ sub _init {
 sub _initIo {
 	my $self = shift;
 
-	#delete any existing I/O
+	#delete any existing I/O attributes
 	delete $self->{'paths'};
 	delete $self->{'dest'};
 	delete $self->{'cowPtr'};
-	delete $self->{'dirtyOutput'};
+	delete $self->{'dirty'};
 
 	#preset a couple values when we are writing a file
 	if($self->writable) {
@@ -131,12 +131,16 @@ sub _initIo {
 		}
 		#no previous version exists
 		else {
-			#set dirtyOutput to guarantee a flush
-			$self->{'dirtyOutput'} = 1 if(!$self->getPaths());
+			#mark as dirty to guarantee a flush
+			$self->_markAsDirty;
 		}
 	}
 
 	return;
+}
+
+sub _markAsDirty {
+	$_[0]->{'dirty'} = 1
 }
 
 #method to read the requested data directly from a file in MogileFS
@@ -224,6 +228,10 @@ sub _write {
 	}
 }
 
+sub dirty {
+	return $_[0]->{'dirty'};
+}
+
 sub flags {
 	return $_[0]->{'flags'};
 }
@@ -232,7 +240,7 @@ sub flush {
 	my $self = shift;
 
 	#flush the current I/O handles if we are in a write mode and the output file is dirty
-	if($self->writable && $self->{'dirtyOutput'}) {
+	if($self->writable && $self->dirty) {
 		$self->_flush();
 	}
 
@@ -341,7 +349,7 @@ sub read {
 	my ($len, $offset) = @_;
 
 	#should the output file be used for reads
-	my $output = $self->writable;
+	my $output = $self->writable && $self->dirty;
 
 	#make sure the read request from the output file is satisfiable
 	$self->_cow($offset + $len) if($output);
@@ -373,7 +381,7 @@ sub truncate {
 	}
 
 	#copy up to $size bytes of the file
-	$self->{'dirtyOutput'} = 1;
+	$self->_markAsDirty;
 	$self->_cow($size, $size);
 	delete $self->{'cowPtr'};
 
@@ -392,8 +400,8 @@ sub write {
 	my $len = length($$buf);
 	return 0 if($len <= 0);
 
-	#mark the output file as being updated
-	$self->{'dirtyOutput'} = 1;
+	#mark this file as being dirty and requiring a flush
+	$self->_markAsDirty;
 
 	#make sure data is copied from the old file past the specified write buffer
 	$self->_cow($offset + $len);
