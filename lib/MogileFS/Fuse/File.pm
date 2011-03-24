@@ -100,7 +100,6 @@ sub _init {
 	#set all the specified options
 	$self->{'flags'} = $opt{'flags'};
 	$self->{'fuse'} = $opt{'fuse'};
-	$self->{'id'} = is_shared($self) || refaddr($self);
 	$self->{'path'} = $opt{'path'};
 
 	#initialize the I/O attributes
@@ -326,7 +325,7 @@ sub getPaths {
 }
 
 sub id {
-	return $_[0]->{'id'};
+	return is_shared($_[0]) || refaddr($_[0]);
 }
 
 sub MogileFS {
