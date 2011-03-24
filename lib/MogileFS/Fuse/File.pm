@@ -106,7 +106,7 @@ sub _init {
 	$self->_initIo;
 
 	#short-circuit if the file isn't opened for writing and doesn't exist in MogileFS
-	return if(!($self->flags & (O_WRONLY | O_RDWR)) && !$self->getPaths());
+	return if(!$self->writable && !$self->getPaths());
 
 	#return the initialized object
 	return $self;
@@ -123,7 +123,7 @@ sub _initIo {
 	delete $self->{'dirtyOutput'};
 
 	#preset a couple values when we are writing a file
-	if($self->flags & (O_WRONLY | O_RDWR)) {
+	if($self->writable) {
 		#a previous version exists
 		if($self->getPaths()) {
 			#initialize the cow pointer for COW
@@ -232,7 +232,7 @@ sub flush {
 	my $self = shift;
 
 	#flush the current I/O handles if we are in a write mode and the output file is dirty
-	if($self->flags & (O_WRONLY | O_RDWR) && $self->{'dirtyOutput'}) {
+	if($self->writable && $self->{'dirtyOutput'}) {
 		$self->_flush();
 	}
 
@@ -252,7 +252,7 @@ sub getOutputDest {
 	my $self = shift;
 
 	#short-circuit if we are in a read only mode
-	return if(!($self->flags & (O_WRONLY | O_RDWR)));
+	return if(!$self->writable);
 
 	#create an output path if one doesn't exist already
 	{
@@ -339,11 +339,14 @@ sub path {
 sub read {
 	my $self = shift;
 	my ($len, $offset) = @_;
-	my $output = $self->flags & (O_WRONLY | O_RDWR);
+
+	#should the output file be used for reads
+	my $output = $self->writable;
 
 	#make sure the read request from the output file is satisfiable
 	$self->_cow($offset + $len) if($output);
 
+	#issue raw read request
 	return $self->_read($offset, $len,
 		'output' => $output,
 	);
@@ -375,6 +378,10 @@ sub truncate {
 	delete $self->{'cowPtr'};
 
 	return;
+}
+
+sub writable {
+	return $_[0]->flags & (O_WRONLY | O_RDWR);
 }
 
 sub write {
