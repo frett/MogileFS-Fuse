@@ -3,7 +3,7 @@ package MogileFS::Fuse;
 use strict;
 use threads::shared;
 
-our $VERSION = v0.0.1;
+our $VERSION = v0.1.0;
 
 use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
 use Fcntl qw{O_WRONLY};
