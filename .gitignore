@@ -3,6 +3,7 @@
 /Build
 /MANIFEST.bak
 /MANIFEST.SKIP.bak
+/MYMETA.json
 /MYMETA.yml
 /MogileFS-Fuse-*/
 /MogileFS-Fuse-*.tar.gz
