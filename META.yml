@@ -1,9 +1,12 @@
 ---
 abstract: 'Fuse binding for MogileFS'
-author: []
+author:
+  - unknown
+build_requires: {}
 configure_requires:
   Module::Build: 0.36
-generated_by: 'Module::Build version 0.3624'
+dynamic_config: 1
+generated_by: 'Module::Build version 0.38, CPAN::Meta::Converter version 2.112150'
 license: mit
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -12,23 +15,24 @@ name: MogileFS-Fuse
 provides:
   MogileFS::Fuse:
     file: lib/MogileFS/Fuse.pm
-    version: v0.0.1
+    version: v0.1.0
   MogileFS::Fuse::BufferedFile:
     file: lib/MogileFS/Fuse/BufferedFile.pm
-    version: v0.0.1
+    version: v0.1.0
   MogileFS::Fuse::Constants:
     file: lib/MogileFS/Fuse/Constants.pm
+    version: 0
   MogileFS::Fuse::File:
     file: lib/MogileFS/Fuse/File.pm
-    version: v0.0.1
+    version: v0.1.0
   MogileFS::Fuse::FilePaths:
     file: lib/MogileFS/Fuse/FilePaths.pm
-    version: v0.0.1
+    version: v0.1.0
 requires:
   Fuse: 0.11
   MogileFS::Client::FilePaths: 0
   Params::Validate: 0
   Scalar::Util: 0
 resources:
-  license: http://www.opensource.org/licenses/mit-license.php
-version: v0.0.1
+  license: http://opensource.org/licenses/mit-license.php
+version: v0.1.0
