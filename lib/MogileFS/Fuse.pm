@@ -156,6 +156,9 @@ sub mount {
 		$self->{'mounted'} = 1;
 	}
 
+	#set MogileFS debugging based on the log level
+	local $MogileFS::DEBUG = ($self->_config->{'loglevel'} >= DEBUGMFS);
+
 	#generate closures for supported callbacks
 	my %callbacks;
 	foreach(CALLBACKS) {
@@ -176,6 +179,7 @@ sub mount {
 		'mountopts'  => $self->_config->{'mountopts'},
 		'mountpoint' => $self->_config->{'mountpoint'},
 		'threaded'   => $self->_config->{'threaded'},
+		'debug'      => ($self->_config->{'loglevel'} >= DEBUGFUSE),
 
 		#callback functions
 		%callbacks,
