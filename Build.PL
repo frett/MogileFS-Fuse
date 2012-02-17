@@ -8,6 +8,7 @@ Module::Build->new(
 	'module_name'        => 'MogileFS::Fuse',
 	'create_makefile_pl' => 'traditional',
 	'dist_abstract'      => 'Fuse binding for MogileFS',
+	'dist_author'        => 'Daniel Frett <daniel.frett@gmail.com>',
 	'license'            => 'bsd',
 	'configure_requires' => {
 		'Module::Build'               => '0.36',
