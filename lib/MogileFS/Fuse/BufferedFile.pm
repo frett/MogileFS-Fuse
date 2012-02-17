@@ -5,7 +5,7 @@ use mro 'c3';
 use threads::shared;
 use base qw{MogileFS::Fuse::File};
 
-our $VERSION = v0.1.0;
+our $VERSION = 0.02;
 
 use constant BUFFERSIZE => 64*1024;
 
