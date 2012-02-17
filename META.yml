@@ -15,19 +15,19 @@ name: MogileFS-Fuse
 provides:
   MogileFS::Fuse:
     file: lib/MogileFS/Fuse.pm
-    version: v0.1.0
+    version: 0.02
   MogileFS::Fuse::BufferedFile:
     file: lib/MogileFS/Fuse/BufferedFile.pm
-    version: v0.1.0
+    version: 0.02
   MogileFS::Fuse::Constants:
     file: lib/MogileFS/Fuse/Constants.pm
     version: 0
   MogileFS::Fuse::File:
     file: lib/MogileFS/Fuse/File.pm
-    version: v0.1.0
+    version: 0.02
   MogileFS::Fuse::FilePaths:
     file: lib/MogileFS/Fuse/FilePaths.pm
-    version: v0.1.0
+    version: 0.02
 requires:
   Fuse: 0.11
   MogileFS::Client::FilePaths: 0
@@ -35,4 +35,4 @@ requires:
   Scalar::Util: 0
 resources:
   license: http://opensource.org/licenses/mit-license.php
-version: v0.1.0
+version: 0.02
