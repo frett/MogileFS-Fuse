@@ -2,11 +2,15 @@
 ^\.git/
 ^\.gitignore
 
+# OS specific files
+\.DS_Store$
+
 # build generated files
 ^_build/
 ^Build$
 ^blib/
-^MYMETA.yml$
+^MYMETA\.yml$
+^MYMETA\.json$
 
 # temporary files
 \.bak$
