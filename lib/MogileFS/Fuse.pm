@@ -88,7 +88,7 @@ sub _init {
 	die 'You are trying to reinitialize an existing MogileFS::Fuse object, this could introduce race conditions and is unsupported' if($self->{'initialized'});
 
 	#disable threads if they aren't loaded
-	$opt{'threaded'} = 0 if(!$threads::threads);
+	$opt{'threaded'} = 0 if(!THREADS);
 
 	#initialize this object
 	$self->{'config'} = shared_clone({%opt});
