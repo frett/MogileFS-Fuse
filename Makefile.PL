@@ -10,6 +10,7 @@ WriteMakefile
                  ],
   'VERSION_FROM' => 'lib/MogileFS/Client/Fuse.pm',
   'PREREQ_PM' => {
+                   'Test::More' => 0,
                    'Scalar::Util' => 0,
                    'MogileFS::Client::FilePaths' => 0,
                    'Params::Validate' => 0,

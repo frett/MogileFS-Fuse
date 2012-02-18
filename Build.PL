@@ -13,6 +13,9 @@ Module::Build->new(
 	'configure_requires' => {
 		'Module::Build'               => '0.36',
 	},
+	'build_requires'     => {
+		'Test::More'                  => 0,
+	},
 	'requires'           => {
 		'Fuse'                        => '0.11',
 		'MogileFS::Client::FilePaths' => 0,

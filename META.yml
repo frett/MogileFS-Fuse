@@ -2,7 +2,8 @@
 abstract: 'Fuse binding for MogileFS'
 author:
   - 'Daniel Frett <daniel.frett@gmail.com>'
-build_requires: {}
+build_requires:
+  Test::More: 0
 configure_requires:
   Module::Build: 0.36
 dynamic_config: 1
