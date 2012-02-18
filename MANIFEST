@@ -11,3 +11,4 @@ MANIFEST			This list of files
 META.json
 META.yml
 scripts/mogilefuse-init.d
+t/00use.t
