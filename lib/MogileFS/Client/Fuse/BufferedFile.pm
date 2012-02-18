@@ -1,15 +1,15 @@
-package MogileFS::Fuse::BufferedFile;
+package MogileFS::Client::Fuse::BufferedFile;
 
 use strict;
 use mro 'c3';
 use threads::shared;
-use base qw{MogileFS::Fuse::File};
+use base qw{MogileFS::Client::Fuse::File};
 
 our $VERSION = 0.02;
 
 use constant BUFFERSIZE => 64*1024;
 
-use MogileFS::Fuse::Constants qw{:LEVELS};
+use MogileFS::Client::Fuse::Constants qw{:LEVELS};
 
 ##Instance Methods
 

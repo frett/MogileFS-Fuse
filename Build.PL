@@ -5,7 +5,7 @@ use strict;
 use Module::Build;
 
 Module::Build->new(
-	'module_name'        => 'MogileFS::Fuse',
+	'module_name'        => 'MogileFS::Client::Fuse',
 	'create_makefile_pl' => 'traditional',
 	'dist_abstract'      => 'Fuse binding for MogileFS',
 	'dist_author'        => 'Daniel Frett <daniel.frett@gmail.com>',

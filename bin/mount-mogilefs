@@ -49,9 +49,9 @@ if($opt{'threaded'}) {
 	require threads if($Config::Config{'useithreads'});
 }
 
-#load MogileFS::Fuse and mount the file system
-require MogileFS::Fuse::FilePaths;
-MogileFS::Fuse::FilePaths->new(%opt)->mount();
+#load MogileFS::Client::Fuse and mount the file system
+require MogileFS::Client::Fuse::FilePaths;
+MogileFS::Client::Fuse::FilePaths->new(%opt)->mount();
 
 #function to daemonize this script
 #based on code from http://perlmonks.org/index.pl?node=144812 and MogileFS::Util::daemonize

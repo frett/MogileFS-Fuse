@@ -5,5 +5,5 @@
 /MANIFEST.SKIP.bak
 /MYMETA.json
 /MYMETA.yml
-/MogileFS-Fuse-*/
-/MogileFS-Fuse-*.tar.gz
+/MogileFS-CLient-Fuse-*/
+/MogileFS-Client-Fuse-*.tar.gz

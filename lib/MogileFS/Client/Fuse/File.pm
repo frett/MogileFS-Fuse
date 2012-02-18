@@ -1,4 +1,4 @@
-package MogileFS::Fuse::File;
+package MogileFS::Client::Fuse::File;
 
 use strict;
 use threads::shared;
@@ -9,17 +9,17 @@ use Errno qw{EIO};
 use Fcntl;
 use HTTP::Request;
 use HTTP::Status qw{HTTP_REQUEST_RANGE_NOT_SATISFIABLE};
-use MogileFS::Fuse::Constants qw{:LEVELS};
+use MogileFS::Client::Fuse::Constants qw{:LEVELS};
 use Scalar::Util qw{refaddr};
 
 ##Static Methods
 
 #Constructor
 #	flags => the open flags for this file
-#	fuse  => the MogileFS::Fuse object controlling this file
+#	fuse  => the MogileFS::Client::Fuse object controlling this file
 #	path  => the path of this file
 sub new {
-	#create the new MogileFS::Fuse::File object
+	#create the new MogileFS::Client::Fuse::File object
 	my $self = shift;
 	$self = bless(shared_clone({}), ref($self) || $self);
 

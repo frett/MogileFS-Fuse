@@ -1,4 +1,4 @@
-package MogileFS::Fuse::Constants;
+package MogileFS::Client::Fuse::Constants;
 
 use strict;
 use base qw{Exporter};

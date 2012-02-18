@@ -1,14 +1,14 @@
-package MogileFS::Fuse;
+package MogileFS::Client::Fuse;
 
 =head1 NAME
 
-MogileFS::Fuse - FUSE binding for MogileFS
+MogileFS::Client::Fuse - FUSE binding for MogileFS
 
 =head1 SYNOPSIS
 
- use MogileFS::Fuse::FilePaths;
+ use MogileFS::Client::Fuse::FilePaths;
 
- my $fs = MogileFS::Fuse::FilePaths->new(
+ my $fs = MogileFS::Client::Fuse::FilePaths->new(
    'mountpoint' => '/mnt/mogile-fuse',
    'trackers'   => ['tracker1:port', 'tracker2:port'],
    'domain'     => 'fuse.example.com::namespace',
@@ -33,9 +33,9 @@ use Fcntl qw{O_WRONLY};
 use Fuse 0.11;
 use LWP;
 use MogileFS::Client;
-use MogileFS::Fuse::BufferedFile;
-use MogileFS::Fuse::Constants qw{CALLBACKS :LEVELS THREADS};
-use MogileFS::Fuse::File;
+use MogileFS::Client::Fuse::BufferedFile;
+use MogileFS::Client::Fuse::Constants qw{CALLBACKS :LEVELS THREADS};
+use MogileFS::Client::Fuse::File;
 use Params::Validate qw{validate_with ARRAYREF BOOLEAN SCALAR UNDEF};
 use Scalar::Util qw{blessed refaddr};
 
@@ -56,7 +56,7 @@ my %unshared;
 #	threaded   => flag indicating if this MogileFS file system should be threaded or not
 #	trackers   => the addresses for the MogileFS trackers
 sub new {
-	#create the new MogileFS::Fuse object
+	#create the new MogileFS::Client::Fuse object
 	my $self = shift;
 	$self = bless(shared_clone({}), ref($self) || $self);
 
@@ -66,7 +66,7 @@ sub new {
 
 ##Instance Methods
 
-#return the config for this MogileFS::Fuse object
+#return the config for this MogileFS::Client::Fuse object
 sub _config {
 	#cache the config in the local thread for faster access if threads are loaded
 	if(THREADS) {
@@ -89,7 +89,7 @@ sub _config {
 	return $_[0]->{'config'};
 }
 
-#method that will initialize the MogileFS::Fuse object
+#method that will initialize the MogileFS::Client::Fuse object
 sub _init {
 	my $self = shift;
 	my %opt = validate_with(
@@ -108,7 +108,7 @@ sub _init {
 	);
 
 	#die horribly if we are trying to reinit an existing object
-	die 'You are trying to reinitialize an existing MogileFS::Fuse object, this could introduce race conditions and is unsupported' if($self->{'initialized'});
+	die 'You are trying to reinitialize an existing MogileFS::Client::Fuse object, this could introduce race conditions and is unsupported' if($self->{'initialized'});
 
 	#disable threads if they aren't loaded
 	$opt{'threaded'} = 0 if(!THREADS);
@@ -229,8 +229,8 @@ sub openFile {
 
 	#pick the file class to use based on whether buffering is enabled or not
 	my $class =
-		$self->_config->{'buffered'} ? 'MogileFS::Fuse::BufferedFile' :
-		'MogileFS::Fuse::File';
+		$self->_config->{'buffered'} ? 'MogileFS::Client::Fuse::BufferedFile' :
+		'MogileFS::Client::Fuse::File';
 
 	#create a file object for the file being opened
 	return $class->new(

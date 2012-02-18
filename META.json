@@ -12,7 +12,7 @@
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
       "version" : "2"
    },
-   "name" : "MogileFS-Fuse",
+   "name" : "MogileFS-Client-Fuse",
    "prereqs" : {
       "configure" : {
          "requires" : {
@@ -29,24 +29,24 @@
       }
    },
    "provides" : {
-      "MogileFS::Fuse" : {
-         "file" : "lib/MogileFS/Fuse.pm",
+      "MogileFS::Client::Fuse" : {
+         "file" : "lib/MogileFS/Client/Fuse.pm",
          "version" : "0.02"
       },
-      "MogileFS::Fuse::BufferedFile" : {
-         "file" : "lib/MogileFS/Fuse/BufferedFile.pm",
+      "MogileFS::Client::Fuse::BufferedFile" : {
+         "file" : "lib/MogileFS/Client/Fuse/BufferedFile.pm",
          "version" : "0.02"
       },
-      "MogileFS::Fuse::Constants" : {
-         "file" : "lib/MogileFS/Fuse/Constants.pm",
+      "MogileFS::Client::Fuse::Constants" : {
+         "file" : "lib/MogileFS/Client/Fuse/Constants.pm",
          "version" : 0
       },
-      "MogileFS::Fuse::File" : {
-         "file" : "lib/MogileFS/Fuse/File.pm",
+      "MogileFS::Client::Fuse::File" : {
+         "file" : "lib/MogileFS/Client/Fuse/File.pm",
          "version" : "0.02"
       },
-      "MogileFS::Fuse::FilePaths" : {
-         "file" : "lib/MogileFS/Fuse/FilePaths.pm",
+      "MogileFS::Client::Fuse::FilePaths" : {
+         "file" : "lib/MogileFS/Client/Fuse/FilePaths.pm",
          "version" : "0.02"
       }
    },

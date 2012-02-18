@@ -1,20 +1,20 @@
-package MogileFS::Fuse::FilePaths;
+package MogileFS::Client::Fuse::FilePaths;
 
 use strict;
 use mro 'c3';
 use threads::shared;
-use base qw{MogileFS::Fuse};
+use base qw{MogileFS::Client::Fuse};
 
 our $VERSION = 0.02;
 
 use Errno qw{EEXIST EIO ENOENT};
 use MogileFS::Client::FilePaths;
-use MogileFS::Fuse::Constants qw{:LEVELS};
+use MogileFS::Client::Fuse::Constants qw{:LEVELS};
 use Params::Validate qw{validate_with BOOLEAN SCALAR};
 
 ##Instance Methods
 
-#method that will initialize the MogileFS::Fuse::FilePaths object
+#method that will initialize the MogileFS::Client::Fuse::FilePaths object
 sub _init {
 	my $self = shift;
 	my %opt = validate_with(

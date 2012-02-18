@@ -17,5 +17,5 @@
 
 # distribution related files
 ^MANIFEST\.SKIP$
-^MogileFS-Fuse-[\d\.\_]+
+^MogileFS-Client-Fuse-[\d\.\_]+
 \.tar\.gz$
