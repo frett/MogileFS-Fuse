@@ -4,7 +4,7 @@
       "Daniel Frett <daniel.frett@gmail.com>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.112150",
+   "generated_by" : "Module::Build version 0.38, CPAN::Meta::Converter version 2.120351",
    "license" : [
       "bsd"
    ],
@@ -16,7 +16,7 @@
    "prereqs" : {
       "build" : {
          "requires" : {
-            "Test::More" : 0
+            "Test::More" : "0"
          }
       },
       "configure" : {
@@ -27,9 +27,9 @@
       "runtime" : {
          "requires" : {
             "Fuse" : "0.11",
-            "MogileFS::Client::FilePaths" : 0,
-            "Params::Validate" : 0,
-            "Scalar::Util" : 0
+            "MogileFS::Client::FilePaths" : "0",
+            "Params::Validate" : "0",
+            "Scalar::Util" : "0"
          }
       }
    },
@@ -59,7 +59,10 @@
    "resources" : {
       "license" : [
          "http://www.opensource.org/licenses/bsd-license.php"
-      ]
+      ],
+      "repository" : {
+         "url" : "https://github.com/frett/MogileFS-Fuse"
+      }
    },
    "version" : "0.02"
 }

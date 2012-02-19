@@ -10,6 +10,11 @@ Module::Build->new(
 	'dist_abstract'      => 'Fuse binding for MogileFS',
 	'dist_author'        => 'Daniel Frett <daniel.frett@gmail.com>',
 	'license'            => 'bsd',
+	'meta_merge'         => {
+		'resources' => {
+			'repository' => 'https://github.com/frett/MogileFS-Fuse',
+		},
+	},
 	'configure_requires' => {
 		'Module::Build'               => '0.36',
 	},
