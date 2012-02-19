@@ -58,7 +58,7 @@
    "release_status" : "stable",
    "resources" : {
       "license" : [
-         "http://www.opensource.org/licenses/bsd-license.php"
+         "http://www.opensource.org/licenses/BSD-3-Clause"
       ],
       "repository" : {
          "url" : "https://github.com/frett/MogileFS-Fuse"

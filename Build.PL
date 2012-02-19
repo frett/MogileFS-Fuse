@@ -12,6 +12,7 @@ Module::Build->new(
 	'license'            => 'bsd',
 	'meta_merge'         => {
 		'resources' => {
+			'license'    => 'http://www.opensource.org/licenses/BSD-3-Clause',
 			'repository' => 'https://github.com/frett/MogileFS-Fuse',
 		},
 	},
