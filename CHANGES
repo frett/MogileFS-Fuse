@@ -1,0 +1,6 @@
+	* Fixed rename throwing an error even though it completed successfully
+	* Added additional documentation
+
+2012-02-18: Release version 0.02
+
+	* Initial release
