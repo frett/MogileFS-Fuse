@@ -438,6 +438,11 @@ sub fuse_write {
 
 __END__
 
+=head1 CAVEATS
+
+This module requires MogileFS storage nodes that support partial content PUT
+requests using the Content-Range header.
+
 =head1 AUTHOR
 
 Daniel Frett
