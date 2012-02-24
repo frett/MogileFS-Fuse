@@ -443,6 +443,9 @@ __END__
 This module requires MogileFS storage nodes that support partial content PUT
 requests using the Content-Range header.
 
+Currently deleting a directory is unsupported because it is not supported in the
+FilePaths MogileFS plugin.
+
 =head1 AUTHOR
 
 Daniel Frett
