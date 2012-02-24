@@ -5,7 +5,7 @@ use mro 'c3';
 use threads::shared;
 use base qw{MogileFS::Client::Fuse};
 
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 use Errno qw{EEXIST EIO ENOENT};
 use MogileFS::Client::FilePaths;
@@ -261,9 +261,12 @@ sub fuse_rename {
 	#attempt renaming the specified file
 	my $mogc = $self->MogileFS();
 	my $response = eval {
-		$mogc->rename($old, $new);
-		$self->_flushDir($old, 1);
-		$self->_flushDir($new, 1);
+		my $resp = $mogc->rename($old, $new);
+		if($resp) {
+			$self->_flushDir($old, 1);
+			$self->_flushDir($new, 1);
+		}
+		return $resp;
 	};
 	if($@ || !$response) {
 		($?, $!) = (-1, '');
