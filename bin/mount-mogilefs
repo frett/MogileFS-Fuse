@@ -149,6 +149,12 @@ B<mount-mogilefs>.
 
 Daniel Frett
 
-=head1 COPYRIGHT
+=head1 COPYRIGHT AND LICENSE
 
 Copyright 2011-2012 - Campus Crusade for Christ International
+
+This is free software, licensed under:
+
+  The (three-clause) BSD License
+
+=cut
