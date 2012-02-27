@@ -1,9 +1,10 @@
 package MogileFS::Client::Fuse::File;
 
 use strict;
+use warnings;
 use threads::shared;
 
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 use Errno qw{EIO};
 use Fcntl;

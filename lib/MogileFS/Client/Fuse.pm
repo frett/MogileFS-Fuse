@@ -24,9 +24,10 @@ filesystem.
 =cut
 
 use strict;
+use warnings;
 use threads::shared;
 
-our $VERSION = 0.02;
+our $VERSION = 0.03;
 
 use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
 use Fcntl qw{O_WRONLY};

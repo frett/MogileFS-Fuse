@@ -1,6 +1,7 @@
 package MogileFS::Client::Fuse::FilePaths;
 
 use strict;
+use warnings;
 use mro 'c3';
 use threads::shared;
 use base qw{MogileFS::Client::Fuse};
@@ -48,10 +49,10 @@ sub _listDir {
 
 	#check to see if the specified path is cached
 	my $cache = $self->{'dirs'};
-	my $dir = $cache->{$path} || {};
+	my $dir = $cache->{$path};
 
 	#load the directory listing if the current cached listing is stale
-	if($dir->{'expires'} <= time) {
+	if(!defined($dir) || $dir->{'expires'} <= time) {
 		#fetch and store the files in the dir cache
 		$dir = {
 			'expires' => time + $config->{'filepaths.dircache.duration'},
