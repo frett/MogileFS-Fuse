@@ -396,6 +396,27 @@ sub fuse_rename {
 	return 0;
 }
 
+sub fuse_rmdir {
+	my $self = shift;
+	my ($path) = @_;
+	$path = $self->sanitize_path($path);
+
+	# attempt removing the specified directory
+	eval{
+		my $mogc = $self->MogileFS();
+		die unless($mogc->filepaths_remove_directory($path));
+
+		# flush the directory cache
+		$self->_flushDir($path, 1);
+	};
+	if($@) {
+		$self->log(ERROR, 'Error removing directory: ' . $path);
+		return -EIO();
+	}
+
+	return 0;
+}
+
 sub fuse_truncate {
 	my $self = shift;
 	my ($path, $size) = @_;
