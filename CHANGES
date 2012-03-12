@@ -1,3 +1,5 @@
+2012-03-12: Release version 0.03
+
 	* Improved performance of directory cache
 	* Fixed rename throwing an error even though it completed successfully
 	* Added additional documentation
