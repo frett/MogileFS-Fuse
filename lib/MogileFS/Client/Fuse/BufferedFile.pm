@@ -6,7 +6,7 @@ use mro 'c3';
 use threads::shared;
 use base qw{MogileFS::Client::Fuse::File};
 
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 use constant BUFFERSIZE => 64*1024;
 
@@ -43,7 +43,7 @@ sub _init {
 
 	#initialize the base object
 	$self = $self->next::method(%opt);
-	return if(!$self);
+	return undef if(!$self);
 
 	#setup the buffer data structure
 	$self->{'buffer'} = shared_clone({

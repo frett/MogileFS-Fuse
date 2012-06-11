@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use threads::shared;
 
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
 use Errno qw{EIO};
 use Fcntl;
@@ -106,8 +106,11 @@ sub _init {
 	#initialize the I/O attributes
 	$self->_initIo;
 
+	# short-circuit if the file is opened for writing and MogileFS is mounted readonly
+	return undef if($self->writable && $self->fuse->_config->{'readonly'});
+
 	#short-circuit if the file isn't opened for writing and doesn't exist in MogileFS
-	return if(!$self->writable && !$self->getPaths());
+	return undef if(!$self->writable && !$self->getPaths());
 
 	#return the initialized object
 	return $self;

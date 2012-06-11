@@ -9,6 +9,7 @@ my %opt = (
 	'daemonize'  => 0,
 	'domain'     => '',
 	'loglevel'   => 0,
+	'readonly'   => undef,
 	'trackers'   => [],
 	'threaded'   => 1,
 	'mountopts'  => [],
@@ -19,6 +20,7 @@ my $resp = GetOptions(
 	'daemon'      => \$opt{'daemonize'},
 	'domain=s'    => \$opt{'domain'},
 	'mountopt=s@' => \$opt{'mountopts'},
+	'readonly!'   => \$opt{'readonly'},
 	'threaded!'   => \$opt{'threaded'},
 	'tracker=s@'  => \$opt{'trackers'},
 	'verbose+'    => \$opt{'loglevel'},
@@ -125,6 +127,12 @@ This option is used to pass mount options to FUSE. A commonly used mount option
 is I<allow_other>.
 
 Multiple mount options can be specified by using this option multiple times.
+
+=item B<--readonly>
+
+This option will mount the MogileFS filesystem as read-only.
+
+Read-only is disabled by default.
 
 =item B<--threaded>
 

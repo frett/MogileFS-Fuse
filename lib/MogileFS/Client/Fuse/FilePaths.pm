@@ -6,9 +6,9 @@ use mro 'c3';
 use threads::shared;
 use base qw{MogileFS::Client::Fuse};
 
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
-use Errno qw{EEXIST EIO ENOENT};
+use Errno qw{EACCES EEXIST EIO ENOENT};
 use MogileFS::Client::FilePaths;
 use MogileFS::Client::Fuse::Constants qw{:LEVELS};
 use Params::Validate qw{validate_with BOOLEAN SCALAR};
@@ -154,9 +154,11 @@ sub fuse_getattr {
 
 	# Cook some permissions since we don't store this information in mogile
 	#TODO: how should we set file/dir permissions?
-	my $modes =
-		$finfo->{'is_directory'} ? (0040 << 9) + 0777 :
-		(0100 << 9) + 0666;
+	my $modes = 0444; # read bit
+	$modes |= 0222 if(!$self->_config->{'readonly'}); # write bit
+	$modes |= 0111 if($finfo->{'is_directory'}); # execute bit
+	$modes |= (($finfo->{'is_directory'} ? 0040 : 0100) << 9); # entry type bits
+
 	my $size = $finfo->{'size'} || 0;
 
 	#set some generic attributes
@@ -201,6 +203,9 @@ sub fuse_mkdir {
 	my ($path, $mode) = @_;
 	$path = $self->sanitize_path($path);
 
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
+
 	#create and delete a file to force path vivification
 	eval{
 		my $file = $path . '/.mkdir_tmp_' . join('', map {chr(int(rand(26)) + 97)} (0..9));
@@ -223,6 +228,9 @@ sub fuse_mknod {
 	my $self = shift;
 	my ($path) = @_;
 	$path = $self->sanitize_path($path);
+
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
 
 	#issue actual mknod callback
 	my $resp = $self->next::method(@_);
@@ -257,6 +265,9 @@ sub fuse_rename {
 	$old = $self->sanitize_path($old);
 	$new = $self->sanitize_path($new);
 
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
+
 	#throw an error if the new file already exists
 	return -EEXIST() if(defined $self->get_file_info($new));
 
@@ -290,6 +301,9 @@ sub fuse_truncate {
 	my ($path, $size) = @_;
 	$path = $self->sanitize_path($path);
 
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
+
 	#issue actual truncate callback
 	my $resp = $self->next::method(@_);
 
@@ -304,6 +318,9 @@ sub fuse_unlink {
 	my $self = shift;
 	my ($path) = @_;
 	$path = $self->sanitize_path($path);
+
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
 
 	#issue actual unlink callback
 	my $resp = $self->next::method(@_);

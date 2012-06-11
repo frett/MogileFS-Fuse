@@ -1,3 +1,5 @@
+	* Added support for a read-only option
+
 2012-03-12: Release version 0.03
 
 	* Improved performance of directory cache

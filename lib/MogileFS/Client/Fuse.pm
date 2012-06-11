@@ -27,9 +27,9 @@ use strict;
 use warnings;
 use threads::shared;
 
-our $VERSION = 0.03;
+our $VERSION = 0.04;
 
-use Errno qw{EEXIST EIO ENOENT EOPNOTSUPP};
+use Errno qw{EACCES EEXIST EIO ENOENT EOPNOTSUPP};
 use Fcntl qw{O_WRONLY};
 use Fuse 0.11;
 use LWP;
@@ -103,6 +103,7 @@ sub _init {
 			'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
 			'mountopts'  => {'type' => SCALAR | UNDEF, 'default' => undef},
 			'mountpoint' => {'type' => SCALAR},
+			'readonly'   => {'type' => BOOLEAN, 'default' => undef},
 			'threaded'   => {'type' => BOOLEAN, 'default' => THREADS},
 			'trackers'   => {'type' => ARRAYREF},
 		},
@@ -223,7 +224,7 @@ sub mount {
 	return;
 }
 
-#thin wrapper for opening a file that can be overriden by subclasses as necessary
+#thin wrapper for opening a file
 sub openFile {
 	my $self = shift;
 	my ($path, $flags) = @_;
@@ -309,6 +310,9 @@ sub fuse_mknod {
 	my ($path) = @_;
 	$path = $self->sanitize_path($path);
 
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
+
 	#attempt creating an empty file
 	eval {$self->openFile($path, O_WRONLY)->release()};
 	return -EIO() if($@);
@@ -386,6 +390,9 @@ sub fuse_truncate {
 	my ($path, $size) = @_;
 	$path = $self->sanitize_path($path);
 
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
+
 	#attempt to truncate the specified file
 	eval{
 		my $file = $self->openFile($path, O_WRONLY);
@@ -402,6 +409,9 @@ sub fuse_unlink {
 	my $self = shift;
 	my ($path) = @_;
 	$path = $self->sanitize_path($path);
+
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
 
 	#attempt deleting the specified file
 	my $mogc = $self->MogileFS();
@@ -428,6 +438,9 @@ sub fuse_write {
 	my $buf = \$_[1];
 	my $offset = $_[2];
 	my $file = $_[3];
+
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
 
 	my $bytesWritten = eval{$file->write($buf, $offset)};
 	return -EIO() if($@);
