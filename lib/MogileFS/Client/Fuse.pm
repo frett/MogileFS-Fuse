@@ -25,6 +25,7 @@ filesystem.
 
 use strict;
 use warnings;
+use mro;
 use threads::shared;
 
 our $VERSION = 0.04;
@@ -34,9 +35,7 @@ use Fcntl qw{O_WRONLY};
 use Fuse 0.11;
 use LWP;
 use MogileFS::Client;
-use MogileFS::Client::Fuse::BufferedFile;
 use MogileFS::Client::Fuse::Constants qw{CALLBACKS :LEVELS THREADS};
-use MogileFS::Client::Fuse::File;
 use Params::Validate qw{validate_with ARRAYREF BOOLEAN SCALAR UNDEF};
 use Scalar::Util qw{blessed refaddr};
 
@@ -44,6 +43,9 @@ use Scalar::Util qw{blessed refaddr};
 
 #variables to track the currently mounted Fuse object
 my %unshared;
+
+# custom file class counter (used to autogenerate a file package)
+my $fileClassIndex = 0;
 
 ##Static Methods
 
@@ -114,6 +116,30 @@ sub _init {
 
 	#disable threads if they aren't loaded
 	$opt{'threaded'} = 0 if(!THREADS);
+
+	# generate the customized file class
+	{
+		my @classes;
+		push @classes, 'MogileFS::Client::Fuse::BufferedFile' if($opt{'buffered'});
+		push @classes, 'MogileFS::Client::Fuse::File';
+
+		# load the specified classes
+		eval "require $_;" foreach(@classes);
+		die $@ if($@);
+
+		# create file class
+		if(@classes > 1) {
+			$opt{'fileClass'} = 'MogileFS::Client::Fuse::File::Generated' . $fileClassIndex;
+			$fileClassIndex++;
+
+			no strict 'refs';
+			push @{$opt{'fileClass'} . '::ISA'}, @classes;
+			mro::set_mro($opt{'fileClass'}, 'c3');
+		}
+		else {
+			$opt{'fileClass'} = $classes[0];
+		}
+	}
 
 	#initialize this object
 	$self->{'config'} = shared_clone({%opt});
@@ -229,13 +255,8 @@ sub openFile {
 	my $self = shift;
 	my ($path, $flags) = @_;
 
-	#pick the file class to use based on whether buffering is enabled or not
-	my $class =
-		$self->_config->{'buffered'} ? 'MogileFS::Client::Fuse::BufferedFile' :
-		'MogileFS::Client::Fuse::File';
-
 	#create a file object for the file being opened
-	return $class->new(
+	return $self->_config->{'fileClass'}->new(
 		'fuse'  => $self,
 		'path'  => $path,
 		'flags' => $flags,
