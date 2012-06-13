@@ -55,10 +55,6 @@ sub _cow {
 sub _flush {
 	my $self = shift;
 
-	#copy any data that hasn't been copied yet and fsync any buffers
-	$self->_cow($self->{'cowPtr'} + 1024*1024) while(defined $self->{'cowPtr'});
-	$self->fsync();
-
 	#commit the output file
 	my $dest = $self->getOutputDest();
 	my $res = eval {
@@ -245,6 +241,11 @@ sub flush {
 
 	#flush the current I/O handles if we are in a write mode and the output file is dirty
 	if($self->writable && $self->dirty) {
+		# copy any data that hasn't been copied yet and fsync any buffers
+		$self->_cow($self->{'cowPtr'} + 1024*1024) while(defined $self->{'cowPtr'});
+		$self->fsync();
+
+		# flush file
 		$self->_flush();
 	}
 
