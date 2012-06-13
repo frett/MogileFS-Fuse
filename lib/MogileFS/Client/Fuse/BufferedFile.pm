@@ -50,9 +50,6 @@ sub _fsync {
 sub _initIo {
 	my $self = shift;
 
-	# (re)initialize the base object
-	$self = $self->next::method(%opt);
-
 	# (re)initialize the buffer data structure
 	$self->{'buffer'} = shared_clone({
 		'data'  => '',
@@ -60,7 +57,8 @@ sub _initIo {
 		'end'   => 0,
 	});
 
-	return;
+	# (re)initialize the base object
+	return $self->next::method(%opt);
 }
 
 sub _read {
