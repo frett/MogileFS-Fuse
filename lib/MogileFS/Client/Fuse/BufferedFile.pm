@@ -58,7 +58,7 @@ sub _initIo {
 	});
 
 	# (re)initialize the base object
-	return $self->next::method(%opt);
+	return $self->next::method();
 }
 
 sub _read {
