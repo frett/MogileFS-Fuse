@@ -460,6 +460,10 @@ requests using the Content-Range header.
 Currently deleting a directory is unsupported because it is not supported in the
 FilePaths MogileFS plugin.
 
+Multiple threads/processes simultaneously writing to the same open file handle
+is untested, it may work or it may corrupt the file due to unforeseen race
+conditions.
+
 =head1 AUTHOR
 
 Daniel Frett
