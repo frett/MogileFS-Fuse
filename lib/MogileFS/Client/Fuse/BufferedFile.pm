@@ -46,22 +46,21 @@ sub _fsync {
 	return $self->next::method(@_);
 }
 
-sub _init {
+# method that will (re)initialize the I/O buffer
+sub _initIo {
 	my $self = shift;
-	my (%opt) = @_;
 
-	#initialize the base object
+	# (re)initialize the base object
 	$self = $self->next::method(%opt);
-	return undef if(!$self);
 
-	#setup the buffer data structure
+	# (re)initialize the buffer data structure
 	$self->{'buffer'} = shared_clone({
 		'data'  => '',
 		'start' => 0,
 		'end'   => 0,
 	});
 
-	return $self;
+	return;
 }
 
 sub _read {
