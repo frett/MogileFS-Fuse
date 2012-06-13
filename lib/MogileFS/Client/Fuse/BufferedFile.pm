@@ -14,7 +14,7 @@ use MogileFS::Client::Fuse::Constants qw{:LEVELS};
 
 ##Instance Methods
 
-sub _fsync {
+sub _flushBuffer {
 	my $self = shift;
 
 	#lock the buffer while processing
@@ -33,7 +33,16 @@ sub _fsync {
 		$buffer->{'end'} = $buffer->{'start'} = 0;
 	}
 
-	#process any other fsync methods as necessary
+	return 1;
+}
+
+sub _fsync {
+	my $self = shift;
+
+	# flush the write buffer
+	$self->_flushBuffer();
+
+	# process any other fsync methods as necessary
 	return $self->next::method(@_);
 }
 
@@ -91,7 +100,7 @@ sub _write {
 
 		#flush the buffer if it is full or current data isn't adjacent to the buffer
 		if($offset != $buffer->{'end'} || $buffer->{'end'} - $buffer->{'start'} > BUFFERSIZE) {
-			$self->fsync();
+			$self->_flushBuffer();
 			$buffer->{'end'} = $buffer->{'start'} = $offset;
 		}
 
