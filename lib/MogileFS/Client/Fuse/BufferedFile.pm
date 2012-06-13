@@ -68,7 +68,7 @@ sub _read {
 	my ($offset, $buf, %opt) = @_;
 
 	#flush the write buffer if this is an output file read
-	$self->fsync() if($opt{'output'});
+	$self->_flushBuffer() if($opt{'output'});
 
 	#issue actual read request
 	return $self->next::method($offset, $buf, %opt);
