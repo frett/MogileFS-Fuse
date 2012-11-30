@@ -399,7 +399,28 @@ sub fuse_rename {
 }
 
 sub fuse_statfs {
-	return 255, 1, 1, 1, 1, 1024;
+	my $self = shift;
+
+	# retrieve all device stats
+	my $resp = eval {$self->MogileFS->{'backend'}->do_request('get_devices', {})};
+
+	# calculate the total and free space for the storage cluster
+	my $total = 0;
+	my $free = 0;
+	for(my $i = 1;$i <= $resp->{'devices'}; $i++) {
+		$total += $resp->{'dev' . $i . '_mb_total'};
+		$free  += $resp->{'dev' . $i . '_mb_free'};
+	}
+
+	# return the drive stats
+	return (
+		255,      # max name length
+		1,        # files
+		1,        # filesfree
+		$total,   # blocks
+		$free,    # blocks available
+		1024*1024 # block size
+	);
 }
 
 sub fuse_symlink {
