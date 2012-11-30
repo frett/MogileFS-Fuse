@@ -161,27 +161,29 @@ sub fuse_getattr {
 
 	my $size = $finfo->{'size'} || 0;
 
-	#set some generic attributes
-	#TODO: set more sane values for file attributes
-	my ($dev, $ino, $rdev, $blocks, $gid, $uid, $nlink, $blksize) = (0,0,0,1,0,0,1,1024);
+	# set some generic attributes
+	my $blksize = 1024;
+	my $blocks = (($size - 1) / $blksize) + 1;
 	my ($atime, $ctime, $mtime);
-	$atime = $ctime = $mtime = $finfo->{'modified'} || time;
+	$ctime = $mtime = $finfo->{'modified'} || time;
+	$atime = time;
 
 	#return the attribute values
+	#TODO: set more sane values for file attributes
 	return (
-		$dev,
-		$ino,
-		$modes,
-		$nlink,
-		$uid,
-		$gid,
-		$rdev,
-		$size,
-		$atime,
-		$mtime,
-		$ctime,
-		$blksize,
-		$blocks,
+		0,        # device
+		0,        # inode
+		$modes,   # mode
+		1,        # hard links
+		0,        # user id
+		0,        # group id
+		0,        # device identifier (special files)
+		$size,    # size (in bytes)
+		$atime,   # last access time
+		$mtime,   # last modified time
+		$ctime,   # inode change time
+		$blksize, # block size
+		$blocks,  # number of blocks
 	);
 }
 
