@@ -103,6 +103,7 @@ sub _init {
 		'spec'   => {
 			'buffered'   => {'type' => BOOLEAN, 'default' => 1},
 			'class'      => {'type' => SCALAR | UNDEF, 'default' => undef},
+			'checksums'  => {'type' => BOOLEAN, 'default' => undef},
 			'domain'     => {'type' => SCALAR},
 			'loglevel'   => {'type' => SCALAR, 'default' => ERROR},
 			'mountopts'  => {'type' => SCALAR | UNDEF, 'default' => undef},
@@ -123,6 +124,7 @@ sub _init {
 	{
 		my @classes;
 		push @classes, 'MogileFS::Client::Fuse::BufferedFile' if($opt{'buffered'});
+		push @classes, 'MogileFS::Client::Fuse::ChecksumedFile' if($opt{'checksums'});
 		push @classes, 'MogileFS::Client::Fuse::File';
 
 		# load the specified classes

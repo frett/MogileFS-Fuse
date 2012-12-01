@@ -56,8 +56,13 @@ sub _cow {
 	return;
 }
 
+#	close_args => a hash ref of additional arguments to send to the create_close MogileFS call
 sub _flush {
 	my $self = shift;
+	my (%opt) = @_;
+
+	# sanitize opts
+	$opt{'close_args'} = {} if(ref($opt{'close_args'}) ne 'HASH');
 
 	#commit the output file
 	my $dest = $self->_getOutputDest();
@@ -70,6 +75,7 @@ sub _flush {
 			'size'   => $dest->{'size'},
 			'key'    => ($dest->{'error'} ? '' : $self->path),
 			'path'   => $dest->{'path'},
+			%{$opt{'close_args'}},
 
 			# these attributes are specific to MogileFS::Client::FilePaths which utilizes the MetaData MogileFS plugin
 			#TODO: move this into a FilePaths specific file object

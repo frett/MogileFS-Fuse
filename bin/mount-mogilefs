@@ -4,7 +4,9 @@ use strict;
 
 # default config
 my %opt = (
+	'buffered'   => 1,
 	'class'      => undef,
+	'checksums'  => 0,
 	'daemon'     => 0,
 	'domain'     => '',
 	'log'        => undef,
@@ -75,6 +77,8 @@ my $resp = GetOptions(
 	'domain=s'    => \$opt{'domain'},
 	'log=s'       => \$opt{'log'},
 	'mountopt=s@' => \$opt{'mountopts'},
+	'buffered!'   => \$opt{'buffered'},
+	'checksums!'  => \$opt{'checksums'},
 	'readonly!'   => \$opt{'readonly'},
 	'threaded!'   => \$opt{'threaded'},
 	'tracker=s@'  => \$opt{'trackers'},
