@@ -38,6 +38,7 @@ use MogileFS::Client;
 use MogileFS::Client::Fuse::Constants qw{CALLBACKS :LEVELS THREADS};
 use Params::Validate qw{validate_with ARRAYREF BOOLEAN SCALAR UNDEF};
 use Scalar::Util qw{blessed refaddr};
+use Switch qw{Perl6};
 
 ##Private static variables
 
@@ -322,8 +323,33 @@ sub fuse_getdir {
 	return -EOPNOTSUPP();
 }
 
+sub fuse_getxattr {
+	my $self = shift;
+	my ($path, $name) = @_;
+	$path = $self->sanitize_path($path);
+
+	given($name) {
+		when(['MogileFS.class', 'MogileFS.checksum']) {
+			my $resp = eval {$self->MogileFS->file_info($path, {'devices' => 0})};
+			if($resp) {
+				return $resp->{'checksum'} if($name eq 'MogileFS.checksum');
+				return $resp->{'class'}    if($name eq 'MogileFS.class');
+			}
+		}
+	}
+
+	return 0;
+}
+
 sub fuse_link {
 	return -EOPNOTSUPP();
+}
+
+sub fuse_listxattr {
+	return (
+		'MogileFS.checksum',
+		'MogileFS.class',
+	), 0;
 }
 
 sub fuse_mknod {
