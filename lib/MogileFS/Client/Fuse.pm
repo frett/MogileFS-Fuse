@@ -424,6 +424,23 @@ sub fuse_rename {
 	return -EOPNOTSUPP();
 }
 
+sub fuse_setxattr {
+	my $self = shift;
+	my ($path, $name, $value, $flags) = @_;
+	$path = $self->sanitize_path($path);
+
+	# switch based on xattr name
+	given($name) {
+		when('MogileFS.class') {
+			my $resp = eval {$self->MogileFS->update_class($path, $value)};
+			return -EIO() if(!$resp || $@);
+			return 0;
+		}
+	}
+
+	return -EOPNOTSUPP();
+}
+
 sub fuse_statfs {
 	return 255, 1, 1, 1, 1, 1024;
 }
