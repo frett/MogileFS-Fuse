@@ -408,8 +408,11 @@ sub fuse_statfs {
 	my $total = 0;
 	my $free = 0;
 	for(my $i = 1;$i <= $resp->{'devices'}; $i++) {
-		$total += $resp->{'dev' . $i . '_mb_total'};
-		$free  += $resp->{'dev' . $i . '_mb_free'};
+		my $dev = 'dev' . $i;
+		my $mbFree  = $resp->{$dev . '_mb_free'};
+		my $mbTotal = $resp->{$dev . '_mb_total'};
+		$free  += $mbFree  if($mbFree && $resp->{$dev . '_status'} eq 'alive' && $resp->{$dev . '_observed_state'} eq 'writeable');
+		$total += $mbTotal if($mbTotal);
 	}
 
 	# return the drive stats
