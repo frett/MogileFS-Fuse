@@ -8,6 +8,7 @@ my %opt = (
 	'class'      => undef,
 	'daemonize'  => 0,
 	'domain'     => '',
+	'log'        => undef,
 	'loglevel'   => 0,
 	'readonly'   => undef,
 	'trackers'   => [],
@@ -19,6 +20,7 @@ my $resp = GetOptions(
 	'class=s'     => \$opt{'class'},
 	'daemon'      => \$opt{'daemonize'},
 	'domain=s'    => \$opt{'domain'},
+	'log=s'       => \$opt{'log'},
 	'mountopt=s@' => \$opt{'mountopts'},
 	'readonly!'   => \$opt{'readonly'},
 	'threaded!'   => \$opt{'threaded'},
@@ -44,6 +46,19 @@ $0 = $0 . ' [' . $opt{'mountpoint'} . ']';
 
 #daemonize if requested
 daemonize() if(delete $opt{'daemonize'});
+
+# redirect output to log file if specified
+if(defined($opt{'log'})) {
+	close(STDERR);
+	close(STDOUT);
+	open(STDERR, '>', $opt{'log'});
+	open(STDOUT, '>', $opt{'log'});
+	select STDERR; $| = 1;
+	select STDOUT; $| = 1;
+}
+
+# disable verbose logging if running as daemon and not redirecting output
+$opt{'loglevel'} = 0 if($opt{'daemonize'} && !defined($opt{'log'}));
 
 #load threads only if threads are supported by the current perl
 if($opt{'threaded'}) {
@@ -150,6 +165,10 @@ This option makes B<mount-mogilefs> verbose.
 
 Specifying this options multiple times increases the verbosity of
 B<mount-mogilefs>.
+
+=item B<--log> I<file>
+
+This option redirects STDOUT and STDERR to the specified file.
 
 =back
 
