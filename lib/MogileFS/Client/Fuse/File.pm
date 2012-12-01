@@ -201,6 +201,7 @@ sub _write {
 			#build request
 			my $req = HTTP::Request->new('PUT' => $dest->{'path'}, [
 				'Content-Range' => 'bytes ' . $offset . '-' . ($offset + $len - 1) . '/*',
+				'Content-Length' => $len,
 			]);
 			$req->content_ref($buf);
 
@@ -288,7 +289,7 @@ sub getOutputDest {
 			}
 
 			#attempt creating a file at the specified location
-			my $res = $self->fuse->ua->request(HTTP::Request->new('PUT' => $tmpFile->{'path'}));
+			my $res = $self->fuse->ua->request(HTTP::Request->new('PUT' => $tmpFile->{'path'}, ['Content-Length' => 0]));
 			if(!$res->is_success()) {
 				$self->fuse->log(ERROR, 'Error creating temporary file in MogileFS: ' . $self->path);
 				die;
