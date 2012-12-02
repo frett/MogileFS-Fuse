@@ -25,7 +25,8 @@ sub _flush($%) {
 			#TODO: need threaded support
 		}
 		else {
-			$opt{'close_args'}->{'checksumverify'} = 1;
+			#XXX: disable checksumverify due to it causing a delay in close_file for verifying the checksum
+			#$opt{'close_args'}->{'checksumverify'} = 1;
 			$opt{'close_args'}->{'checksum'} = $checksum->{'type'} . ':' . $checksum->{'digest'}->hexdigest();
 			$self->fuse->log(DEBUG, 'file checksum: ' . $opt{'close_args'}->{'checksum'});
 
