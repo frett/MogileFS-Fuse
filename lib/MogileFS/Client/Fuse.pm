@@ -306,6 +306,14 @@ sub ua {
 
 ##Callback Functions
 
+sub fuse_chmod {
+	return 0;
+}
+
+sub fuse_chown {
+	return 0;
+}
+
 sub fuse_create {
 	my $self = shift;
 	my ($path, $modes, $flags) = @_;
@@ -564,6 +572,10 @@ sub fuse_unlink {
 	}
 
 	#return success
+	return 0;
+}
+
+sub fuse_utime {
 	return 0;
 }
 
