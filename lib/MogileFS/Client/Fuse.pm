@@ -404,7 +404,8 @@ sub fuse_statfs {
 	# retrieve all device stats
 	my $resp = eval {$self->MogileFS->{'backend'}->do_request('get_devices', {})};
 
-	# calculate the total and free space for the storage cluster
+	# calculate the total and free space for the storage cluster in blocks
+	my $blkSize = 1024;
 	my $total = 0;
 	my $free = 0;
 	for(my $i = 1;$i <= $resp->{'devices'}; $i++) {
@@ -414,15 +415,17 @@ sub fuse_statfs {
 		$free  += $mbFree  if($mbFree && $resp->{$dev . '_status'} eq 'alive' && $resp->{$dev . '_observed_state'} eq 'writeable');
 		$total += $mbTotal if($mbTotal);
 	}
+	$total *= (1024 * 1024) / $blkSize;
+	$free *= (1024 * 1024) / $blkSize;
 
 	# return the drive stats
 	return (
-		255,      # max name length
-		1,        # files
-		1,        # filesfree
-		$total,   # blocks
-		$free,    # blocks available
-		1024*1024 # block size
+		255,     # max name length
+		1,       # files
+		1,       # filesfree
+		$total,  # blocks
+		$free,   # blocks available
+		$blkSize # block size
 	);
 }
 
