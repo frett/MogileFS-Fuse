@@ -101,9 +101,9 @@ sub _populateAttrs {
 		$ctime = $mtime = $finfo->{'modified'} || time;
 		$atime = time;
 
-		# store the entry attributes
+		# generate the entry attributes
 		#TODO: set more sane values for file attributes
-		$finfo->{'fattrs'} = [
+		my $fattrs = [
 			0,        # device
 			0,        # inode
 			$modes,   # mode
@@ -118,6 +118,9 @@ sub _populateAttrs {
 			$blksize, # block size
 			$blocks,  # number of blocks
 		];
+
+		# make the attrs shared if $finfo is shared
+		$finfo->{'fattrs'} = is_shared($finfo) ? shared_clone($fattrs) : $fattrs;
 	}
 
 	return $finfo;
