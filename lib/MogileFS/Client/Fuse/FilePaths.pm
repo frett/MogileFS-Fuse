@@ -80,6 +80,49 @@ sub _flushDir {
 	return;
 }
 
+sub _populateAttrs {
+	my $self = shift;
+	my ($finfo) = @_;
+
+	if(ref($finfo) eq 'HASH' && ref($finfo->{'fattrs'}) ne 'ARRAY') {
+		# Cook some permissions since we don't store this information in mogile
+		#TODO: how should we set file/dir permissions?
+		my $modes = 0444; # read bit
+		$modes |= 0222 if(!$self->_config->{'readonly'}); # write bit
+		$modes |= 0111 if($finfo->{'is_directory'}); # execute bit
+		$modes |= (($finfo->{'is_directory'} ? 0040 : 0100) << 9); # entry type bits
+
+		my $size = $finfo->{'size'} || 0;
+
+		# set some generic attributes
+		my $blksize = 1024;
+		my $blocks = (($size - 1) / $blksize) + 1;
+		my ($atime, $ctime, $mtime);
+		$ctime = $mtime = $finfo->{'modified'} || time;
+		$atime = time;
+
+		# store the entry attributes
+		#TODO: set more sane values for file attributes
+		$finfo->{'fattrs'} = [
+			0,        # device
+			0,        # inode
+			$modes,   # mode
+			1,        # hard links
+			0,        # user id
+			0,        # group id
+			0,        # device identifier (special files)
+			$size,    # size (in bytes)
+			$atime,   # last access time
+			$mtime,   # last modified time
+			$ctime,   # inode change time
+			$blksize, # block size
+			$blocks,  # number of blocks
+		];
+	}
+
+	return $finfo;
+}
+
 #fetch meta-data about the specified file
 sub get_file_info($) {
 	my $self = shift;
@@ -152,39 +195,8 @@ sub fuse_getattr {
 	my $finfo = $self->get_file_info($path);
 	return -ENOENT() if(!defined $finfo);
 
-	# Cook some permissions since we don't store this information in mogile
-	#TODO: how should we set file/dir permissions?
-	my $modes = 0444; # read bit
-	$modes |= 0222 if(!$self->_config->{'readonly'}); # write bit
-	$modes |= 0111 if($finfo->{'is_directory'}); # execute bit
-	$modes |= (($finfo->{'is_directory'} ? 0040 : 0100) << 9); # entry type bits
-
-	my $size = $finfo->{'size'} || 0;
-
-	# set some generic attributes
-	my $blksize = 1024;
-	my $blocks = (($size - 1) / $blksize) + 1;
-	my ($atime, $ctime, $mtime);
-	$ctime = $mtime = $finfo->{'modified'} || time;
-	$atime = time;
-
-	#return the attribute values
-	#TODO: set more sane values for file attributes
-	return (
-		0,        # device
-		0,        # inode
-		$modes,   # mode
-		1,        # hard links
-		0,        # user id
-		0,        # group id
-		0,        # device identifier (special files)
-		$size,    # size (in bytes)
-		$atime,   # last access time
-		$mtime,   # last modified time
-		$ctime,   # inode change time
-		$blksize, # block size
-		$blocks,  # number of blocks
-	);
+	# populate and return the file attributes
+	return @{$self->_populateAttrs($finfo)->{'fattrs'}};
 }
 
 sub fuse_getdir {
