@@ -80,11 +80,11 @@ sub _flushDir {
 	return;
 }
 
-sub _populateAttrs {
+sub _generateAttrs {
 	my $self = shift;
 	my ($finfo) = @_;
 
-	if(ref($finfo) eq 'HASH' && ref($finfo->{'fattrs'}) ne 'ARRAY') {
+	if(ref($finfo) eq 'HASH') {
 		# Cook some permissions since we don't store this information in mogile
 		#TODO: how should we set file/dir permissions?
 		my $modes = 0444; # read bit
@@ -101,9 +101,9 @@ sub _populateAttrs {
 		$ctime = $mtime = $finfo->{'modified'} || time;
 		$atime = time;
 
-		# generate the entry attributes
+		# generate and return the entry attributes
 		#TODO: set more sane values for file attributes
-		my $fattrs = [
+		return [
 			0,        # device
 			0,        # inode
 			$modes,   # mode
@@ -118,12 +118,9 @@ sub _populateAttrs {
 			$blksize, # block size
 			$blocks,  # number of blocks
 		];
-
-		# make the attrs shared if $finfo is shared
-		$finfo->{'fattrs'} = is_shared($finfo) ? shared_clone($fattrs) : $fattrs;
 	}
 
-	return $finfo;
+	return [];
 }
 
 #fetch meta-data about the specified file
@@ -198,8 +195,8 @@ sub fuse_getattr {
 	my $finfo = $self->get_file_info($path);
 	return -ENOENT() if(!defined $finfo);
 
-	# populate and return the file attributes
-	return @{$self->_populateAttrs($finfo)->{'fattrs'}};
+	# generate and return the file attributes
+	return @{$self->_generateAttrs($finfo)};
 }
 
 sub fuse_getdir {
