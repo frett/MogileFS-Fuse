@@ -38,7 +38,6 @@ use MogileFS::Client;
 use MogileFS::Client::Fuse::Constants qw{CALLBACKS :LEVELS THREADS};
 use Params::Validate qw{validate_with ARRAYREF BOOLEAN SCALAR UNDEF};
 use Scalar::Util qw{blessed refaddr};
-use Switch qw{Perl6};
 
 ##Private static variables
 
@@ -326,15 +325,13 @@ sub fuse_getdir {
 sub fuse_getxattr {
 	my $self = shift;
 	my ($path, $name) = @_;
-	$path = $self->sanitize_path($path);
 
-	given($name) {
-		when(['MogileFS.class', 'MogileFS.checksum']) {
-			my $resp = eval {$self->MogileFS->file_info($path, {'devices' => 0})};
-			if($resp) {
-				return $resp->{'checksum'} if($name eq 'MogileFS.checksum');
-				return $resp->{'class'}    if($name eq 'MogileFS.class');
-			}
+	if($name =~ /^MogileFS\.(?:class|checksum)$/s) {
+		$path = $self->sanitize_path($path);
+		my $resp = eval {$self->MogileFS->file_info($path, {'devices' => 0})};
+		if($resp) {
+			return $resp->{'checksum'} if($name eq 'MogileFS.checksum');
+			return $resp->{'class'}    if($name eq 'MogileFS.class');
 		}
 	}
 
@@ -430,12 +427,10 @@ sub fuse_setxattr {
 	$path = $self->sanitize_path($path);
 
 	# switch based on xattr name
-	given($name) {
-		when('MogileFS.class') {
-			my $resp = eval {$self->MogileFS->update_class($path, $value)};
-			return -EIO() if(!$resp || $@);
-			return 0;
-		}
+	if($name eq 'MogileFS.class') {
+		my $resp = eval {$self->MogileFS->update_class($path, $value)};
+		return -EIO() if(!$resp || $@);
+		return 0;
 	}
 
 	return -EOPNOTSUPP();

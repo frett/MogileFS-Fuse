@@ -27,6 +27,5 @@ Module::Build->new(
 		'MogileFS::Client::FilePaths' => 0,
 		'Params::Validate'            => 0,
 		'Scalar::Util'                => 0,
-		'Switch'                      => 0,
 	},
 )->create_build_script();
