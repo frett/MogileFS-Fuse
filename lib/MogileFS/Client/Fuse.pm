@@ -219,10 +219,17 @@ sub mount {
 
 		#create closure for this callback
 		no strict "refs";
-		$callbacks{$_} = sub {
-			$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'fuse_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')') if($self->_config->{'loglevel'} >= DEBUG);
-			$self->$method(@_);
-		};
+		if($self->_config->{'loglevel'} >= DEBUG) {
+			$callbacks{$_} = sub {
+				$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'fuse_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')');
+				$self->$method(@_);
+			};
+		}
+		else {
+			$callbacks{$_} = sub {
+				$self->$method(@_);
+			};
+		}
 	}
 
 	#mount the MogileFS file system
