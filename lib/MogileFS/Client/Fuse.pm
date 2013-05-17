@@ -264,15 +264,17 @@ sub openFile {
 }
 
 sub sanitize_path {
-	my $self = shift;
-	my ($path) = @_;
+#	my $self = shift;
+#	my ($path) = @_;
 
-	# Make sure we start everything from '/'
-	$path = '/' unless(length($path));
-	$path = '/' if($path eq '.');
-	$path = '/' . $path unless($path =~ m!^/!so);
+	# return the root path if a path wasn't specified
+	return '/' if(length($_[1]) == 0 || $_[1] eq '.');
 
-	return $path;
+	# make sure the path starts with a /
+	return '/' . $_[1] if($_[1] !~ m!^/!s);
+
+	# path doesn't need to be sanitized
+	return $_[1];
 }
 
 #method that will return an LWP UserAgent object
