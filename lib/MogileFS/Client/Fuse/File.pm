@@ -155,7 +155,7 @@ sub _read {
 	my $res;
 	foreach my $uri ($opt{'output'} ? $self->getOutputDest->{'path'} : $self->getPaths()) {
 		#attempt retrieving the requested data
-		$res = $ua->request(HTTP::Request->new('GET' => $uri, $headers));
+		$res = $ua->send_request(HTTP::Request->new('GET' => $uri, $headers));
 
 		#check for errors
 		if($res->is_error) {
@@ -205,7 +205,7 @@ sub _write {
 			$req->content_ref($buf);
 
 			#attempt this raw write
-			my $res = $self->fuse->ua->request($req);
+			my $res = $self->fuse->ua->send_request($req);
 			if(!$res || $res->is_error) {
 				$self->fuse->log(ERROR, 'Error writing data to: ' . $self->path);
 				$dest->{'error'} = 1;
