@@ -331,8 +331,31 @@ sub fuse_getdir {
 	return -EOPNOTSUPP();
 }
 
+sub fuse_getxattr {
+	my $self = shift;
+	my ($path, $name) = @_;
+
+	if($name =~ /^MogileFS\.(?:class|checksum)$/s) {
+		$path = $self->sanitize_path($path);
+		my $resp = eval {$self->MogileFS->file_info($path, {'devices' => 0})};
+		if($resp) {
+			return $resp->{'checksum'} if($name eq 'MogileFS.checksum');
+			return $resp->{'class'}    if($name eq 'MogileFS.class');
+		}
+	}
+
+	return 0;
+}
+
 sub fuse_link {
 	return -EOPNOTSUPP();
+}
+
+sub fuse_listxattr {
+	return (
+		'MogileFS.checksum',
+		'MogileFS.class',
+	), 0;
 }
 
 sub fuse_mknod {
@@ -404,6 +427,21 @@ sub fuse_release {
 }
 
 sub fuse_rename {
+	return -EOPNOTSUPP();
+}
+
+sub fuse_setxattr {
+	my $self = shift;
+	my ($path, $name, $value, $flags) = @_;
+	$path = $self->sanitize_path($path);
+
+	# switch based on xattr name
+	if($name eq 'MogileFS.class') {
+		my $resp = eval {$self->MogileFS->update_class($path, $value)};
+		return -EIO() if(!$resp || $@);
+		return 0;
+	}
+
 	return -EOPNOTSUPP();
 }
 
