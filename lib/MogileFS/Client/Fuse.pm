@@ -414,7 +414,7 @@ sub fuse_statfs {
 	my $resp = eval {$self->MogileFS->{'backend'}->do_request('get_devices', {})};
 
 	# calculate the total and free space for the storage cluster in blocks
-	my $blkSize = 1024;
+	my $blkSize = 1024 * 1024;
 	my $total = 0;
 	my $free = 0;
 	for(my $i = 1;$i <= $resp->{'devices'}; $i++) {
