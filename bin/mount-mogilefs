@@ -51,8 +51,8 @@ daemonize() if(delete $opt{'daemonize'});
 if(defined($opt{'log'})) {
 	close(STDERR);
 	close(STDOUT);
-	open(STDERR, '>', $opt{'log'});
-	open(STDOUT, '>', $opt{'log'});
+	open(STDERR, '>>', $opt{'log'});
+	open(STDOUT, '>>', $opt{'log'});
 	select STDERR; $| = 1;
 	select STDOUT; $| = 1;
 }
