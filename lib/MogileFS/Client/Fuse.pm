@@ -37,6 +37,7 @@ use LWP::UserAgent;
 use MogileFS::Client;
 use MogileFS::Client::Fuse::Constants qw{CALLBACKS :LEVELS THREADS};
 use Params::Validate qw{validate_with ARRAYREF BOOLEAN SCALAR UNDEF};
+use POSIX qw{strftime};
 use Scalar::Util qw{blessed refaddr};
 
 ##Private static variables
@@ -175,7 +176,7 @@ sub log {
 	my $self = shift;
 	my ($level, $msg) = @_;
 	return if($level > $self->_config->{'loglevel'});
-	print STDERR $msg, "\n";
+	print STDERR strftime("[%Y-%m-%d %H:%M:%S] ", localtime), $msg, "\n";
 }
 
 #method that will return a MogileFS object
