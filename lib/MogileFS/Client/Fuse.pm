@@ -33,7 +33,7 @@ our $VERSION = 0.04;
 use Errno qw{EACCES EEXIST EIO ENOENT EOPNOTSUPP};
 use Fcntl qw{O_WRONLY};
 use Fuse 0.11;
-use LWP;
+use LWP::UserAgent;
 use MogileFS::Client;
 use MogileFS::Client::Fuse::Constants qw{CALLBACKS :LEVELS THREADS};
 use Params::Validate qw{validate_with ARRAYREF BOOLEAN SCALAR UNDEF};
