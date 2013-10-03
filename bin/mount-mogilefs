@@ -9,7 +9,7 @@ my %opt = (
 	'daemonize'  => 0,
 	'domain'     => '',
 	'log'        => undef,
-	'loglevel'   => 0,
+	'loglevel'   => 1, # LOG_ERROR
 	'readonly'   => undef,
 	'trackers'   => [],
 	'threaded'   => 1,
@@ -58,7 +58,7 @@ if(defined($opt{'log'})) {
 }
 
 # disable logging if running as daemon and not redirecting output
-$opt{'loglevel'} = -1 if($opt{'daemonize'} && !defined($opt{'log'}));
+$opt{'loglevel'} = -1 if($opt{'daemonize'} && !defined($opt{'log'})); # LOG_OFF
 
 #load threads only if threads are supported by the current perl
 if($opt{'threaded'}) {

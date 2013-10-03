@@ -10,16 +10,20 @@ use constant CALLBACKS => qw{
 };
 
 #log levels
-use constant ERROR     => 0;
-use constant DEBUG     => 1;
-use constant DEBUGMFS  => 2;
-use constant DEBUGFUSE => 3;
+use constant LOG_OFF    => -1;
+use constant LOG_NOTICE => 0;
+use constant ERROR      => 1;
+use constant DEBUG      => 2;
+use constant DEBUGMFS   => 3;
+use constant DEBUGFUSE  => 4;
 
 #are threads enabled
 use constant THREADS => $threads::threads;
 
 our @EXPORT_OK = qw{
 	CALLBACKS
+	LOG_OFF
+	LOG_NOTICE
 	ERROR
 	DEBUG
 	DEBUGMFS
@@ -28,6 +32,8 @@ our @EXPORT_OK = qw{
 };
 our %EXPORT_TAGS = (
 	LEVELS => [qw{
+		LOG_OFF
+		LOG_NOTICE
 		ERROR
 		DEBUG
 		DEBUGMFS
