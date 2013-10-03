@@ -222,7 +222,7 @@ sub mount {
 		no strict "refs";
 		if($self->_config->{'loglevel'} >= DEBUG) {
 			$callbacks{$_} = sub {
-				$self->log(DEBUG, $method . '(' . join(', ', map {'"' . $_ . '"'} ($method eq 'fuse_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')');
+				$self->log(DEBUG, $method . '(' . join(', ', map {defined($_) ? '"' . $_ . '"' : 'undef'} ($method eq 'fuse_write' ? ($_[0], length($_[1]).' bytes', @_[2,3]) : @_)) . ')');
 				$self->$method(@_);
 			};
 		}
