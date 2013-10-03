@@ -68,7 +68,10 @@ if($opt{'threaded'}) {
 
 #load MogileFS::Client::Fuse and mount the file system
 require MogileFS::Client::Fuse::FilePaths;
-MogileFS::Client::Fuse::FilePaths->new(%opt)->mount();
+my $mfs = MogileFS::Client::Fuse::FilePaths->new(%opt);
+$mfs->log(0, "Starting up MogileFS::Client::Fuse");
+$mfs->mount();
+$mfs->log(0, "Shutting down MogileFS::Client::Fuse");
 
 #function to daemonize this script
 #based on code from http://perlmonks.org/index.pl?node=144812 and MogileFS::Util::daemonize

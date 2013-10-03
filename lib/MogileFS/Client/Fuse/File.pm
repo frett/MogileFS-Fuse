@@ -284,14 +284,14 @@ sub getOutputDest {
 				});
 			};
 			if($@ || !$tmpFile) {
-				$self->fuse->log(ERROR, 'Error creating temporary file in MogileFS: ' . $self->path);
+				$self->fuse->log(ERROR, 'Error creating file for output in MogileFS tracker: ' . $self->path);
 				die;
 			}
 
 			#attempt creating a file at the specified location
 			my $res = $self->fuse->ua->request(HTTP::Request->new('PUT' => $tmpFile->{'path'}, ['Content-Length' => 0]));
 			if(!$res->is_success()) {
-				$self->fuse->log(ERROR, 'Error creating temporary file in MogileFS: ' . $self->path);
+				$self->fuse->log(ERROR, 'Error creating file on MogileFS storage node ' . $tmpFile->{'path'} . ' for ' . $self->path);
 				die;
 			}
 
