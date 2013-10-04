@@ -2,9 +2,12 @@ package MogileFS::Client::Fuse::FilePaths;
 
 use strict;
 use warnings;
+use MRO::Compat;
 use mro 'c3';
 use threads::shared;
 use base qw{MogileFS::Client::Fuse};
+
+Class::C3::initialize();
 
 our $VERSION = 0.04;
 

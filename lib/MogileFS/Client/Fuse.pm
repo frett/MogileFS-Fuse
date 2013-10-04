@@ -25,6 +25,7 @@ filesystem.
 
 use strict;
 use warnings;
+use MRO::Compat;
 use mro;
 use threads::shared;
 
@@ -136,6 +137,7 @@ sub _init {
 			no strict 'refs';
 			push @{$opt{'fileClass'} . '::ISA'}, @classes;
 			mro::set_mro($opt{'fileClass'}, 'c3');
+			Class::C3::reinitialize();
 		}
 		else {
 			$opt{'fileClass'} = $classes[0];
