@@ -27,5 +27,6 @@ Module::Build->new(
 		'MogileFS::Client::FilePaths' => 0,
 		'Params::Validate'            => 0,
 		'Scalar::Util'                => 0,
+		'threads::shared'             => '1.21',
 	},
 )->create_build_script();
