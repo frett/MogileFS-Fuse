@@ -1,3 +1,7 @@
+2013-10-05: Release version 0.04
+
+	* add support for perl 5.8
+	* add timestamps to log messages
 	* add support for presenting MogileFS meta-data through xattr
 	* return actual free/total space for statfs call
 	* generate actual block size data for stat
