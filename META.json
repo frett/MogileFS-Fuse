@@ -4,7 +4,7 @@
       "Daniel Frett <daniel.frett@gmail.com>"
    ],
    "dynamic_config" : 1,
-   "generated_by" : "Module::Build version 0.4, CPAN::Meta::Converter version 2.120630",
+   "generated_by" : "Module::Build version 0.4007, CPAN::Meta::Converter version 2.132140",
    "license" : [
       "bsd"
    ],
@@ -27,32 +27,33 @@
       "runtime" : {
          "requires" : {
             "Fuse" : "0.11",
+            "MRO::Compat" : "0",
             "MogileFS::Client::FilePaths" : "0",
             "Params::Validate" : "0",
-            "Scalar::Util" : "0"
+            "Scalar::Util" : "0",
+            "threads::shared" : "1.21"
          }
       }
    },
    "provides" : {
       "MogileFS::Client::Fuse" : {
          "file" : "lib/MogileFS/Client/Fuse.pm",
-         "version" : "0.03"
+         "version" : "0.04"
       },
       "MogileFS::Client::Fuse::BufferedFile" : {
          "file" : "lib/MogileFS/Client/Fuse/BufferedFile.pm",
-         "version" : "0.03"
+         "version" : "0.04"
       },
       "MogileFS::Client::Fuse::Constants" : {
-         "file" : "lib/MogileFS/Client/Fuse/Constants.pm",
-         "version" : 0
+         "file" : "lib/MogileFS/Client/Fuse/Constants.pm"
       },
       "MogileFS::Client::Fuse::File" : {
          "file" : "lib/MogileFS/Client/Fuse/File.pm",
-         "version" : "0.03"
+         "version" : "0.04"
       },
       "MogileFS::Client::Fuse::FilePaths" : {
          "file" : "lib/MogileFS/Client/Fuse/FilePaths.pm",
-         "version" : "0.03"
+         "version" : "0.04"
       }
    },
    "release_status" : "stable",
@@ -64,5 +65,5 @@
          "url" : "https://github.com/frett/MogileFS-Fuse"
       }
    },
-   "version" : "0.03"
+   "version" : "0.04"
 }
