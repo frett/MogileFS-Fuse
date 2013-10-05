@@ -29,7 +29,7 @@ use MRO::Compat;
 use mro;
 use threads::shared;
 
-our $VERSION = 0.04;
+our $VERSION = '0.05';
 
 use Errno qw{EACCES EEXIST EIO ENOENT EOPNOTSUPP};
 use Fcntl qw{O_WRONLY};

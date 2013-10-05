@@ -16,18 +16,19 @@ name: MogileFS-Client-Fuse
 provides:
   MogileFS::Client::Fuse:
     file: lib/MogileFS/Client/Fuse.pm
-    version: 0.04
+    version: 0.05
   MogileFS::Client::Fuse::BufferedFile:
     file: lib/MogileFS/Client/Fuse/BufferedFile.pm
-    version: 0.04
+    version: 0.05
   MogileFS::Client::Fuse::Constants:
     file: lib/MogileFS/Client/Fuse/Constants.pm
+    version: 0.05
   MogileFS::Client::Fuse::File:
     file: lib/MogileFS/Client/Fuse/File.pm
-    version: 0.04
+    version: 0.05
   MogileFS::Client::Fuse::FilePaths:
     file: lib/MogileFS/Client/Fuse/FilePaths.pm
-    version: 0.04
+    version: 0.05
 requires:
   Fuse: 0.11
   MRO::Compat: 0
@@ -38,4 +39,4 @@ requires:
 resources:
   license: http://www.opensource.org/licenses/BSD-3-Clause
   repository: https://github.com/frett/MogileFS-Fuse
-version: 0.04
+version: 0.05

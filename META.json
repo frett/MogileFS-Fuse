@@ -38,22 +38,23 @@
    "provides" : {
       "MogileFS::Client::Fuse" : {
          "file" : "lib/MogileFS/Client/Fuse.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "MogileFS::Client::Fuse::BufferedFile" : {
          "file" : "lib/MogileFS/Client/Fuse/BufferedFile.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "MogileFS::Client::Fuse::Constants" : {
-         "file" : "lib/MogileFS/Client/Fuse/Constants.pm"
+         "file" : "lib/MogileFS/Client/Fuse/Constants.pm",
+         "version" : "0.05"
       },
       "MogileFS::Client::Fuse::File" : {
          "file" : "lib/MogileFS/Client/Fuse/File.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       },
       "MogileFS::Client::Fuse::FilePaths" : {
          "file" : "lib/MogileFS/Client/Fuse/FilePaths.pm",
-         "version" : "0.04"
+         "version" : "0.05"
       }
    },
    "release_status" : "stable",
@@ -65,5 +66,5 @@
          "url" : "https://github.com/frett/MogileFS-Fuse"
       }
    },
-   "version" : "0.04"
+   "version" : "0.05"
 }

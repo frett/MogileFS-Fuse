@@ -3,6 +3,8 @@ package MogileFS::Client::Fuse::Constants;
 use strict;
 use base qw{Exporter};
 
+our $VERSION = '0.05';
+
 use constant CALLBACKS => qw{
 	getattr readlink getdir mknod mkdir unlink rmdir symlink
 	rename link chmod chown truncate utime open read write statfs

@@ -9,7 +9,7 @@ use base qw{MogileFS::Client::Fuse::File};
 
 Class::C3::initialize();
 
-our $VERSION = 0.04;
+our $VERSION = '0.05';
 
 use constant BUFFERSIZE => 64*1024;
 

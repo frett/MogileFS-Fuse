@@ -9,7 +9,7 @@ use base qw{MogileFS::Client::Fuse};
 
 Class::C3::initialize();
 
-our $VERSION = 0.04;
+our $VERSION = '0.05';
 
 use Errno qw{EACCES EEXIST EIO ENOENT};
 use MogileFS::Client::FilePaths;

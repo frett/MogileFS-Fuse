@@ -1,4 +1,4 @@
-2013-10-05: Release version 0.04
+2013-10-05: Release version 0.05
 
 	* add support for perl 5.8
 	* add timestamps to log messages

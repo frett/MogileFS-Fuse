@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use threads::shared;
 
-our $VERSION = 0.04;
+our $VERSION = '0.05';
 
 use Errno qw{EIO};
 use Fcntl;
