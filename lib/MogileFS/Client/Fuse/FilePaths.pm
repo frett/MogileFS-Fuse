@@ -9,7 +9,7 @@ use base qw{MogileFS::Client::Fuse};
 
 Class::C3::initialize();
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 use Errno qw{EACCES EEXIST EIO ENOENT};
 use MogileFS::Client::FilePaths;
@@ -209,7 +209,10 @@ sub fuse_getdir {
 
 	#fetch all the files in the specified directory
 	my @names = eval {keys %{$self->_listDir($path)}};
-	return -EIO() if($@);
+	if($@) {
+		$self->log(ERROR, "error listing directory '$path':\n   $@");
+		return -EIO();
+	}
 
 	#return this directory listing
 	return ('.', '..', @names), 0;
