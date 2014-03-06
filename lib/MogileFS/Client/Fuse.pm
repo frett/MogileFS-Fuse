@@ -306,6 +306,21 @@ sub ua {
 
 ##Callback Functions
 
+sub fuse_create {
+	my $self = shift;
+	my ($path, $modes, $flags) = @_;
+
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
+
+	# attempt creating an empty file
+	eval {$self->openFile($path, O_WRONLY)->release()};
+	return -EIO() if($@);
+
+	# open and return the file
+	return $self->fuse_open($path, $flags);
+}
+
 sub fuse_flush {
 	my $self = shift;
 	my ($path, $file) = @_;
