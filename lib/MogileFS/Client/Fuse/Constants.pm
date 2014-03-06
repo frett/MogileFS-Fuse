@@ -7,8 +7,11 @@ our $VERSION = '0.05';
 
 use constant CALLBACKS => qw{
 	getattr readlink getdir mknod mkdir unlink rmdir symlink
-	rename link chmod chown truncate utime open read write statfs
-	flush release fsync setxattr getxattr listxattr removexattr
+	rename link chmod chown truncate utime open read write
+	statfs flush release fsync setxattr getxattr listxattr
+	removexattr opendir readdir releasedir fsyncdir init
+	destroy access create ftruncate fgetattr lock utimens
+	bmap
 };
 
 #log levels
