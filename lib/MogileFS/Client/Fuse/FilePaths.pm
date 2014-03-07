@@ -13,7 +13,7 @@ our $VERSION = '0.06';
 
 use Errno qw{EACCES EEXIST EIO ENOENT};
 use MogileFS::Client::FilePaths;
-use MogileFS::Client::Fuse::Constants qw{:LEVELS};
+use MogileFS::Client::Fuse::Constants qw{:ATTRS :LEVELS};
 use Params::Validate qw{validate_with BOOLEAN SCALAR};
 
 ##Instance Methods
@@ -88,39 +88,35 @@ sub _generateAttrs {
 	my ($finfo) = @_;
 
 	if(ref($finfo) eq 'HASH') {
+		my $attrs = [];
+
+		#TODO: set more sane values for these attributes
+		$attrs->[ATTR_DEV]   = 0;
+		$attrs->[ATTR_INO]   = 0;
+		$attrs->[ATTR_NLINK] = 1;
+		$attrs->[ATTR_UID]   = 0;
+		$attrs->[ATTR_GID]   = 0;
+		$attrs->[ATTR_RDEV]  = 0;
+
 		# Cook some permissions since we don't store this information in mogile
 		#TODO: how should we set file/dir permissions?
-		my $modes = 0444; # read bit
-		$modes |= 0222 if(!$self->_config->{'readonly'}); # write bit
-		$modes |= 0111 if($finfo->{'is_directory'}); # execute bit
-		$modes |= (($finfo->{'is_directory'} ? 0040 : 0100) << 9); # entry type bits
+		$attrs->[ATTR_MODE] = 0444; # read bit
+		$attrs->[ATTR_MODE] |= 0222 if(!$self->_config->{'readonly'}); # write bit
+		$attrs->[ATTR_MODE] |= 0111 if($finfo->{'is_directory'}); # execute bit
+		$attrs->[ATTR_MODE] |= (($finfo->{'is_directory'} ? 0040 : 0100) << 9); # entry type bits
 
-		my $size = $finfo->{'size'} || 0;
+		# set size, blksize, and blocks attributes
+		$attrs->[ATTR_SIZE] = $finfo->{'size'} || 0;
+		$attrs->[ATTR_BLKSIZE] = 1024;
+		$attrs->[ATTR_BLOCKS] = (($attrs->[ATTR_SIZE] - 1) / $attrs->[ATTR_BLKSIZE]) + 1;
 
-		# set some generic attributes
-		my $blksize = 1024;
-		my $blocks = (($size - 1) / $blksize) + 1;
+		# set time attributes
 		my ($atime, $ctime, $mtime);
-		$ctime = $mtime = $finfo->{'modified'} || time;
-		$atime = time;
+		$attrs->[ATTR_CTIME] = $attrs->[ATTR_MTIME] = $finfo->{'modified'} || time;
+		$attrs->[ATTR_ATIME] = time;
 
-		# generate and return the entry attributes
-		#TODO: set more sane values for file attributes
-		return [
-			0,        # device
-			0,        # inode
-			$modes,   # mode
-			1,        # hard links
-			0,        # user id
-			0,        # group id
-			0,        # device identifier (special files)
-			$size,    # size (in bytes)
-			$atime,   # last access time
-			$mtime,   # last modified time
-			$ctime,   # inode change time
-			$blksize, # block size
-			$blocks,  # number of blocks
-		];
+		# return the generated attributes
+		return $attrs;
 	}
 
 	return [];
