@@ -172,6 +172,24 @@ sub MogileFS {
 
 ##Fuse callbacks
 
+sub fuse_create {
+	my $self = shift;
+	my ($path) = @_;
+	$path = $self->sanitize_path($path);
+
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
+
+	# issue actual create callback
+	my ($resp, $file) = $self->next::method(@_);
+
+	# flush affected entries from the dir cache
+	eval {$self->_flushDir($path, 1)};
+
+	# return the actual response
+	return ($resp, $file);
+}
+
 sub fuse_flush {
 	my $self = shift;
 	my ($path, $file) = @_;
