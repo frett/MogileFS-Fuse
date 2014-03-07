@@ -203,6 +203,17 @@ sub fuse_flush {
 	return $resp;
 }
 
+sub fuse_fgetattr {
+	my $self = shift;
+	my ($path, $file) = @_;
+
+	# generate and return the file attributes
+	return @{$self->_generateAttrs({
+		'is_directory' => 0,
+		'size' => 0, #TODO: get a more acurate value for this
+	})};
+}
+
 sub fuse_ftruncate {
 	my $self = shift;
 	my ($path) = @_;
