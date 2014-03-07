@@ -453,6 +453,7 @@ sub fuse_statfs {
 
 	# retrieve all device stats
 	my $resp = eval {$self->MogileFS->{'backend'}->do_request('get_devices', {})};
+	return -EIO() if($@);
 
 	# calculate the total and free space for the storage cluster in blocks
 	my $blkSize = 1024 * 1024;
