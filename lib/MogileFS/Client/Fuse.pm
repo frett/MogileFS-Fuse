@@ -341,6 +341,23 @@ sub fuse_fsync {
 	return 0;
 }
 
+sub fuse_ftruncate {
+	my $self = shift;
+	my ($path, $size, $file) = @_;
+
+	# throw an error if read-only is enabled
+	return -EACCES() if($self->_config->{'readonly'});
+
+	# attempt to truncate the specified file
+	eval{
+		$file->truncate($size);
+	};
+	return -EIO() if($@);
+
+	# return success
+	return 0;
+}
+
 sub fuse_getattr {
 	return -EOPNOTSUPP();
 }
@@ -507,16 +524,17 @@ sub fuse_truncate {
 	# throw an error if read-only is enabled
 	return -EACCES() if($self->_config->{'readonly'});
 
-	#attempt to truncate the specified file
+	# attempt to open & truncate the specified file
+	my $resp = 0;
 	eval{
 		my $file = $self->openFile($path, O_WRONLY);
-		$file->truncate($size);
+		$resp = $self->fuse_ftruncate($path, $size, $file);
 		$file->release;
 	};
 	return -EIO() if($@);
 
-	#return success
-	return 0;
+	# return response
+	return $resp;
 }
 
 sub fuse_unlink {

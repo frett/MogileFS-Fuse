@@ -380,16 +380,20 @@ sub truncate {
 	my $self = shift;
 	my ($size) = @_;
 
-	#throw an error if it is not possible to truncate the file to the specified size
-	if(!defined $self->{'cowPtr'} || $self->{'cowPtr'} > $size) {
-		$self->fuse->log(ERROR, 'Cannot truncate ' . $self->path . ' to ' . $size);
-		die;
-	}
+	# only process if we are writing to an output file
+	if(my $dest = $self->getOutputDest()) {
+		# flush the file if we are past where we need to truncate the file at
+		if($dest->{'size'} > $size) {
+			$self->_markAsDirty;
+			delete $self->{'cowPtr'};
+			$self->flush();
+		}
 
-	#copy up to $size bytes of the file
-	$self->_markAsDirty;
-	$self->_cow($size, $size);
-	delete $self->{'cowPtr'};
+		# truncate the file
+		$self->_markAsDirty;
+		$self->_cow($size, $size);
+		delete $self->{'cowPtr'};
+	}
 
 	return;
 }
