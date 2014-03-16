@@ -9,7 +9,11 @@ our $VERSION = '0.05';
 use Errno qw{EIO};
 use Fcntl;
 use HTTP::Request;
-use HTTP::Status qw{HTTP_REQUEST_RANGE_NOT_SATISFIABLE};
+use HTTP::Status qw{
+	HTTP_OK
+	HTTP_PARTIAL_CONTENT
+	HTTP_REQUEST_RANGE_NOT_SATISFIABLE
+};
 use MogileFS::Client::Fuse::Constants qw{:LEVELS};
 use Scalar::Util qw{refaddr};
 
@@ -116,8 +120,9 @@ sub _init {
 sub _initIo {
 	my $self = shift;
 
-	#delete any existing I/O attributes
+	# reset any existing I/O attributes
 	delete $self->{'paths'};
+	delete $self->{'size'};
 	delete $self->{'dest'};
 	delete $self->{'cowPtr'};
 	delete $self->{'dirty'};
@@ -174,6 +179,25 @@ sub _read {
 	if(!$res || $res->is_error) {
 		$self->fuse->log(ERROR, 'Error reading data from: ' . $self->path);
 		die;
+	}
+
+	# parse the file size from the response only if we are reading a pre-existing file
+	if(!$opt{'output'} && $res->is_success) {
+		my $length = $res->header('Content-Length');
+		my $range = $res->header('Content-Range');
+
+		# look at Content-Range header for 206 Partial Content responses
+		if($res->code == HTTP_PARTIAL_CONTENT && $range =~ m!^bytes [0-9]+-[0-9]+/([0-9]+)$!) {
+			$self->{'size'} = $1;
+		}
+		# use the Content-Length header for 200 OK responses
+		elsif($res->code == HTTP_OK && $length =~ m!^[0-9]+$!) {
+			$self->{'size'} = $length;
+		}
+		# default to 0 bytes
+		elsif(!defined $self->{'size'}) {
+			$self->{'size'} = 0;
+		}
 	}
 
 	#return the fetched content
@@ -373,6 +397,37 @@ sub release {
 	$self->flush();
 
 	return;
+}
+
+sub size {
+	my $self = shift;
+	my $output = $self->writable && $self->dirty;
+	my $cowPtr = $self->{'cowPtr'};
+
+	# use the output file size if we have one and finished copy-on-write
+	if($output && !defined $cowPtr) {
+		if(my $dest = $self->getOutputDest()) {
+			return $dest->{'size'};
+		}
+	}
+
+	# trigger a read to load input file size if we haven't loaded it already
+	my $size = $self->{'size'};
+	if(!defined $size) {
+		# use cow when possible
+		if($output && defined $cowPtr) {
+			$self->_cow($cowPtr + 1);
+		} else {
+			# read a single byte to load the file size
+			$self->_read(0, 1);
+		}
+
+		# re-read size
+		$size = $self->{'size'};
+	}
+
+	# return the input size
+	return $size;
 }
 
 #method that will truncate this file to the specified byte

@@ -210,7 +210,7 @@ sub fuse_fgetattr {
 	# generate and return the file attributes
 	return @{$self->_generateAttrs({
 		'is_directory' => 0,
-		'size' => 0, #TODO: get a more acurate value for this
+		'size'         => $file->size(),
 	})};
 }
 
