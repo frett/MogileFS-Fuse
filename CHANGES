@@ -1,3 +1,5 @@
+	* add support for the create, ftruncate, and fgetattr FUSE opcodes
+
 2013-10-05: Release version 0.05
 
 	* add support for perl 5.8
