@@ -13,6 +13,7 @@ WriteMakefile
                            'Test::More' => 0,
                            'Scalar::Util' => 0,
                            'MogileFS::Client::FilePaths' => 0,
+                           'Config::IniFiles' => 0,
                            'Params::Validate' => 0,
                            'Fuse' => '0.11',
                            'threads::shared' => '1.21',

@@ -23,6 +23,7 @@ Module::Build->new(
 		'Test::More'                  => 0,
 	},
 	'requires'           => {
+		'Config::IniFiles'            => 0,
 		'Fuse'                        => '0.11',
 		'MogileFS::Client::FilePaths' => 0,
 		'MRO::Compat'                 => 0,
