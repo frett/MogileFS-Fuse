@@ -1,4 +1,5 @@
 	* add support for the create, ftruncate, and fgetattr FUSE opcodes
+	* add support for configuring mogilefuse with a config file
 
 2013-10-05: Release version 0.05
 
