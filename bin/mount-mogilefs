@@ -5,11 +5,11 @@ use strict;
 # default config
 my %opt = (
 	'class'      => undef,
-	'daemon'     => undef,
+	'daemon'     => 0,
 	'domain'     => '',
 	'log'        => undef,
 	'loglevel'   => 1, # LOG_ERROR
-	'readonly'   => undef,
+	'readonly'   => 0,
 	'trackers'   => [],
 	'threaded'   => 1,
 	'mountopts'  => [],
@@ -30,16 +30,15 @@ if(defined($cfgFile) && !(-e $cfgFile && -f $cfgFile)) {
 $cfgFile = '/etc/mogilefs/mogilefuse.conf' if(!defined($cfgFile));
 
 # load the config file if it exists before parsing command line arguments
-my %dft = (
-	'trackers'   => [],
-	'mountopts'  => [],
+my %multiValueOption = (
+	'mountopt' => 'mountopts',
+	'tracker'  => 'trackers',
 );
 if(-e $cfgFile && -f $cfgFile) {
 	use Config::IniFiles;
 	my $config = Config::IniFiles->new(
 		'-allowempty' => 1,
-		'-default'    => 'default',
-		'-fallback'   => 'default',
+		'-fallback'   => 'mogilefuse',
 		'-file'       => $cfgFile,
 	);
 	if(!defined($config)) {
@@ -48,22 +47,27 @@ if(-e $cfgFile && -f $cfgFile) {
 	}
 
 	# process config
-	#TODO: come up with a more extensible way to load this config
-	$opt{'class'}      = ($config->val('mogilefuse', 'class'      , $opt{'class'}     ))[0];
-	$opt{'domain'}     = ($config->val('mogilefuse', 'domain'     , $opt{'domain'}    ))[0];
-	$opt{'daemon'}     = ($config->val('mogilefuse', 'daemon'     , $opt{'daemon'}    ))[0];
-	$opt{'log'}        = ($config->val('mogilefuse', 'log'        , $opt{'log'}       ))[0];
-	$opt{'loglevel'}   = ($config->val('mogilefuse', 'loglevel'   , $opt{'loglevel'}  ))[0] + 0;
-	$opt{'readonly'}   = ($config->val('mogilefuse', 'readonly'   , $opt{'readonly'}  ))[0];
-	$opt{'threaded'}   = ($config->val('mogilefuse', 'threaded'   , $opt{'threaded'}  ))[0];
-	$opt{'mountpoint'} = ($config->val('mogilefuse', 'mountpoint' , $opt{'mountpoint'}))[0];
+	foreach($config->Parameters('mogilefuse')) {
+		my @vals = $config->val('mogilefuse', $_);
+		if(exists($multiValueOption{$_})) {
+			# keep all values for multi-value options
+			$opt{$multiValueOption{$_}} = [@vals];
+		} else {
+			# only keep the last value set for single value options
+			$opt{$_} = pop @vals;
+		}
+	}
 
-	#load default list values separate in case they are overriden on the command line
-	$dft{'trackers'}  = [$config->val('mogilefuse', 'tracker' )];
-	$dft{'mountopts'} = [$config->val('mogilefuse', 'mountopt')];
+	# sanitize options that need sanitizing at this point
+	$opt{'loglevel'} += 0;
 }
 
 # parse command line options
+my %dft = (
+	'mountopts' => delete $opt{'mountopts'},
+	'trackers'  => delete $opt{'trackers'},
+);
+$opt{$_} = [] foreach(keys %dft);
 Getopt::Long::Configure('default');
 my $resp = GetOptions(
 	'class=s'     => \$opt{'class'},
@@ -78,7 +82,7 @@ my $resp = GetOptions(
 );
 $opt{'mountpoint'} = shift @ARGV if(@ARGV);
 
-# use the default multi-val options if they weren't specified on the command line
+# use the config file multi-val options if they weren't overridden on the command line
 $opt{'trackers' } = $dft{'trackers' } if(!@{$opt{'trackers' }});
 $opt{'mountopts'} = $dft{'mountopts'} if(!@{$opt{'mountopts'}});
 
