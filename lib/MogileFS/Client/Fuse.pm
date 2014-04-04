@@ -226,14 +226,14 @@ sub cache {
 			# configure CHI
 			my %opts;
 			foreach(grep {/^cache\./} keys %$config) {
-				$opt{substr($_, 6)} = $config->{$_};
+				$opts{substr($_, 6)} = $config->{$_};
 			}
 
 			# driver specific configuration
-			if($opt{'driver'} eq 'Memory') {
+			if($opts{'driver'} eq 'Memory') {
 				# we force usage of our internal thread safe shared cache
-				$opt{'datastore'} = $_[0]->{'cache'};
-				delete $opt{'global'};
+				$opts{'datastore'} = $_[0]->{'cache'};
+				delete $opts{'global'};
 			}
 
 			# create & store cache object
