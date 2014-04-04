@@ -97,6 +97,9 @@ if(!$resp || !defined($opt{'mountpoint'})) {
 #Rename the process for the process list
 $0 = $0 . ' [' . $opt{'mountpoint'} . ']';
 
+# disable logging if running as daemon and not redirecting output
+$opt{'loglevel'} = -1 if($opt{'daemon'} && !defined($opt{'log'})); # LOG_OFF
+
 #daemonize if requested
 daemonize() if(delete $opt{'daemon'});
 
@@ -109,9 +112,6 @@ if(defined($opt{'log'})) {
 	select STDERR; $| = 1;
 	select STDOUT; $| = 1;
 }
-
-# disable logging if running as daemon and not redirecting output
-$opt{'loglevel'} = -1 if($opt{'daemon'} && !defined($opt{'log'})); # LOG_OFF
 
 #load threads only if threads are supported by the current perl
 if($opt{'threaded'}) {
