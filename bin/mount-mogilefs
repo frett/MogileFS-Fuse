@@ -95,6 +95,7 @@ push @{$opt{'trackers'}}, '127.0.0.1:7001' if(!@{$opt{'trackers'}});
 
 #output usage if script was called incorrectly
 if(!$resp || !defined($opt{'mountpoint'})) {
+	#TODO: output usage
 	exit 1;
 }
 
