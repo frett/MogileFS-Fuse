@@ -5,7 +5,7 @@ use strict;
 # default config
 my %opt = (
 	'class'      => undef,
-	'daemonize'  => undef,
+	'daemon'     => undef,
 	'domain'     => '',
 	'log'        => undef,
 	'loglevel'   => 1, # LOG_ERROR
@@ -51,7 +51,7 @@ if(-e $cfgFile && -f $cfgFile) {
 	#TODO: come up with a more extensible way to load this config
 	$opt{'class'}      = ($config->val('mogilefuse', 'class'      , $opt{'class'}     ))[0];
 	$opt{'domain'}     = ($config->val('mogilefuse', 'domain'     , $opt{'domain'}    ))[0];
-	$opt{'daemonize'}  = ($config->val('mogilefuse', 'daemon'     , $opt{'daemonize'} ))[0];
+	$opt{'daemon'}     = ($config->val('mogilefuse', 'daemon'     , $opt{'daemon'}    ))[0];
 	$opt{'log'}        = ($config->val('mogilefuse', 'log'        , $opt{'log'}       ))[0];
 	$opt{'loglevel'}   = ($config->val('mogilefuse', 'loglevel'   , $opt{'loglevel'}  ))[0] + 0;
 	$opt{'readonly'}   = ($config->val('mogilefuse', 'readonly'   , $opt{'readonly'}  ))[0];
@@ -67,7 +67,7 @@ if(-e $cfgFile && -f $cfgFile) {
 Getopt::Long::Configure('default');
 my $resp = GetOptions(
 	'class=s'     => \$opt{'class'},
-	'daemon'      => \$opt{'daemonize'},
+	'daemon'      => \$opt{'daemon'},
 	'domain=s'    => \$opt{'domain'},
 	'log=s'       => \$opt{'log'},
 	'mountopt=s@' => \$opt{'mountopts'},
@@ -98,7 +98,7 @@ if(!$resp || !defined($opt{'mountpoint'})) {
 $0 = $0 . ' [' . $opt{'mountpoint'} . ']';
 
 #daemonize if requested
-daemonize() if(delete $opt{'daemonize'});
+daemonize() if(delete $opt{'daemon'});
 
 # redirect output to log file if specified
 if(defined($opt{'log'})) {
@@ -111,7 +111,7 @@ if(defined($opt{'log'})) {
 }
 
 # disable logging if running as daemon and not redirecting output
-$opt{'loglevel'} = -1 if($opt{'daemonize'} && !defined($opt{'log'})); # LOG_OFF
+$opt{'loglevel'} = -1 if($opt{'daemon'} && !defined($opt{'log'})); # LOG_OFF
 
 #load threads only if threads are supported by the current perl
 if($opt{'threaded'}) {
