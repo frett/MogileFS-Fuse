@@ -31,8 +31,9 @@ $cfgFile = '/etc/mogilefs/mogilefuse.conf' if(!defined($cfgFile));
 
 # load the config file if it exists before parsing command line arguments
 my %multiValueOption = (
-	'mountopt' => 'mountopts',
-	'tracker'  => 'trackers',
+	'mountopt'     => 'mountopts',
+	'tracker'      => 'trackers',
+	'cache.server' => 'cache.servers',
 );
 if(-e $cfgFile && -f $cfgFile) {
 	use Config::IniFiles;

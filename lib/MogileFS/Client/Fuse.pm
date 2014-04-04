@@ -110,6 +110,11 @@ sub _init {
 			'readonly'   => {'type' => BOOLEAN, 'default' => undef},
 			'threaded'   => {'type' => BOOLEAN, 'default' => THREADS},
 			'trackers'   => {'type' => ARRAYREF},
+
+			# cache configuration (& any additional opts prefixed with "cache.")
+			'cache'           => {'type' => BOOLEAN, 'optional' => 1},
+			'cache.driver'    => {'type' => SCALAR, 'default' => 'Memory'},
+			'cache.namespace' => {'type' => SCALAR, 'default' => 'mogilefuse'},
 		},
 	);
 
@@ -144,7 +149,37 @@ sub _init {
 		}
 	}
 
+	# load cache support if required
+	my $cacheConfigured = exists $opt{'cache'};
+	$opt{'cache'} = 1 if(!$cacheConfigured);
+	if($opt{'cache'}) {
+		eval { require CHI };
+		if($@) {
+			die "Unable to load CHI for cache support" if($cacheConfigured);
+			$opt{'cache'} = undef;
+		}
+	}
+
+	# load the requested cache driver
+	if($opt{'cache'}) {
+		#XXX: copied from CHI
+		my ($driver_class) = String::RewritePrefix->rewrite(
+			{'' => 'CHI::Driver::', '+' => ''},
+			$opt{'cache.driver'}
+		);
+
+		# load the driver
+		unless($driver_class->can('fetch')) {
+			eval "require $driver_class;";
+			if($@) {
+				die 'Unable to load specified CHI driver: ' . $opt{'driver'} if($cacheConfigured);
+				$opt{'cache'} = undef;
+			}
+		}
+	}
+
 	#initialize this object
+	$self->{'cache'} = shared_clone({}) if($opt{'cache'} && $opt{'cache.driver'} eq 'Memory');
 	$self->{'config'} = shared_clone({%opt});
 	$self->{'files'} = shared_clone({});
 	$self->{'initialized'} = 1;
@@ -179,6 +214,35 @@ sub log {
 	my ($level, $msg) = @_;
 	return if($level > $self->_config->{'loglevel'});
 	print STDERR strftime("[%Y-%m-%d %H:%M:%S] ", localtime), $msg, "\n";
+}
+
+sub cache {
+	my $cache = $_[0]->_localElem('CHI');
+
+	# create & store a cache object since we didn't have one
+	if(!defined $cache) {
+		my $config = $_[0]->_config;
+		if($config->{'cache'}) {
+			# configure CHI
+			my %opts;
+			foreach(grep {/^cache\./} keys %$config) {
+				$opt{substr($_, 6)} = $config->{$_};
+			}
+
+			# driver specific configuration
+			if($opt{'driver'} eq 'Memory') {
+				# we force usage of our internal thread safe shared cache
+				$opt{'datastore'} = $_[0]->{'cache'};
+				delete $opt{'global'};
+			}
+
+			# create & store cache object
+			$cache = CHI->new(%opts);
+			$_[0]->_localElem('CHI', $cache);
+		}
+	}
+
+	return $cache;
 }
 
 #method that will return a MogileFS object

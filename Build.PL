@@ -23,6 +23,7 @@ Module::Build->new(
 		'Test::More'                  => 0,
 	},
 	'requires'           => {
+		'CHI'                         => 0,
 		'Config::IniFiles'            => 0,
 		'Fuse'                        => '0.11',
 		'MogileFS::Client::FilePaths' => 0,
@@ -30,5 +31,8 @@ Module::Build->new(
 		'Params::Validate'            => 0,
 		'Scalar::Util'                => 0,
 		'threads::shared'             => '1.21',
+	},
+	'recommends'         => {
+		'CHI::Driver::Memcached'      => 0,
 	},
 )->create_build_script();
