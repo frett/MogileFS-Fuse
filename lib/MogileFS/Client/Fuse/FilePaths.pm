@@ -33,9 +33,6 @@ sub _init {
 	#initialize any ancestor classes
 	$self = $self->next::method(%opt);
 
-	#initialize this object
-	$self->{'dirs'} = shared_clone({});
-
 	#return the initialized object
 	return $self;
 }
@@ -46,25 +43,23 @@ sub _listDir {
 	my ($path) = @_;
 	$path .= '/' if($path !~ m!/$!so);
 	my $config = $self->_config;
+	my $cache = $config->{'filepaths.dircache'} ? $self->cache : undef;
 
-	#short-circuit if the dir cache is disabled
-	return {map {($_->{'name'} => $_)} $self->MogileFS->list($path)} if(!$config->{'filepaths.dircache'});
+	# short-circuit if the cache is disabled
+	return {map {($_->{'name'} => $_)} $self->MogileFS->list($path)} if(!defined($cache));
 
-	#check to see if the specified path is cached
-	my $cache = $self->{'dirs'};
-	my $dir = $cache->{$path};
-
-	#load the directory listing if the current cached listing is stale
-	if(!defined($dir) || $dir->{'expires'} <= time) {
-		#fetch and store the files in the dir cache
-		$dir = {
-			'expires' => time + $config->{'filepaths.dircache.duration'},
-			'files' => {
-				map {($_->{'name'} => $_)} $self->MogileFS->list($path),
-			},
-		};
-		$cache->{$path} = shared_clone($dir);
-	}
+	# generate the directory listing
+	my $dir = $cache->compute(
+		'FilePaths:dir:' . $path,
+		{'expires_in' => $config->{'filepaths.dircache.duration'}},
+		sub {
+			return {
+				'files' => {
+					map {($_->{'name'} => $_)} $self->MogileFS->list($path),
+				},
+			};
+		},
+	);
 
 	#return the files for the current directory
 	return $dir->{'files'};
@@ -73,12 +68,26 @@ sub _listDir {
 #method that flushes the specified dir from the dir cache
 sub _flushDir {
 	my $self = shift;
-	my ($path, $flushParent) = @_;
-	$path .= '/' if($path !~ m!/$!so);
-	delete $self->{'dirs'}->{$path};
+	my ($path) = @_;
 
-	#flush the parent directory from the cache as well
-	$self->_flushDir($1, 1) if($flushParent && $path =~ m!^(.*/)[^/]*/$!so);
+	# only flush the directory if caching is enabled
+	my $config = $self->_config;
+	my $cache = $config->{'filepaths.dircache'} ? $self->cache : undef;
+	if(defined($cache)) {
+		$path .= '/' if($path !~ m!/$!s);
+		while($path) {
+			$cache->remove('FilePaths:dir:' . $path);
+
+			# flush the parent directory
+			if($path =~ m!^(.*/)[^/]*/$!so) {
+				$path = $1;
+				next;
+			}
+
+			# break the loop
+			last;
+		}
+	}
 
 	return;
 }
