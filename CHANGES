@@ -1,5 +1,7 @@
 	* add support for the create, ftruncate, and fgetattr FUSE opcodes
 	* add support for configuring mogilefuse with a config file
+	* add support for automatically purging the directory cache periodically to prevent it from using an unbounded
+	  amount of memory for large directory structures.
 
 2013-10-05: Release version 0.05
 
