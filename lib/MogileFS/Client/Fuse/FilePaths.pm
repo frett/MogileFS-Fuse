@@ -65,21 +65,13 @@ sub _listDir {
 				map {($_->{'name'} => $_)} $self->MogileFS->list($path),
 			},
 		};
+
+		# store the directory in the cache
 		$cache->{$path} = shared_clone($dir);
 		$self->{'dirs.writes'}--;
 
 		# puge stale records after 'purgeinterval' writes
-		if($self->{'dirs.writes'} <= 0) {
-			# reset counter
-			$self->{'dir.writes'} = $config->{'filepaths.dircache.purgeinterval'};
-
-			# remove any expired cache entries
-			foreach(keys %$cache) {
-				if(defined($cache->{$_}) && $cache->{$_}->{'expires'} < time) {
-					delete $cache->{$_};
-				}
-			}
-		}
+		$self->_purgeDirCache if($self->{'dirs.writes'} <= 0);
 	}
 
 	#return the files for the current directory
@@ -97,6 +89,27 @@ sub _flushDir {
 	$self->_flushDir($1, 1) if($flushParent && $path =~ m!^(.*/)[^/]*/$!so);
 
 	return;
+}
+
+sub _purgeDirCache {
+	my $self = shift;
+	my $config = $self->_config;
+	my $cache = $self->{'dirs'};
+
+	# puge stale records after 'purgeinterval' writes
+	lock($cache);
+	if($self->{'dirs.writes'} <= 0) {
+		# reset counter
+		$self->{'dir.writes'} = $config->{'filepaths.dircache.purgeinterval'};
+
+		# remove any expired cache entries
+		foreach(keys %$cache) {
+			my $dir = $cache->{$_};
+			if(!defined($dir) || $dir->{'expires'} < time) {
+				delete $cache->{$_};
+			}
+		}
+	}
 }
 
 sub _generateAttrs {
