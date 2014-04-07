@@ -451,9 +451,11 @@ sub fuse_release {
 
 	eval {
 		#remove the file from the list of active file handles
-		my $files = $self->{'files'};
-		lock($files);
-		delete $files->{$file->id};
+		{
+			my $files = $self->{'files'};
+			lock($files);
+			delete $files->{$file->id};
+		}
 
 		#release the file handle
 		$file->release();
