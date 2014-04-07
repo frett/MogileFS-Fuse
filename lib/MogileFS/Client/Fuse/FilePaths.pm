@@ -141,8 +141,8 @@ sub _generateAttrs {
 
 		# set time attributes
 		my ($atime, $ctime, $mtime);
-		$attrs->[ATTR_CTIME] = $attrs->[ATTR_MTIME] = $finfo->{'modified'} || time;
 		$attrs->[ATTR_ATIME] = time;
+		$attrs->[ATTR_CTIME] = $attrs->[ATTR_MTIME] = $finfo->{'modified'} || $attrs->[ATTR_ATIME];
 
 		# return the generated attributes
 		return $attrs;
