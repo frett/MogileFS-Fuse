@@ -25,8 +25,9 @@ sub _init {
 		'allow_extra' => 1,
 		'params' => \@_,
 		'spec'   => {
-			'filepaths.dircache'          => {'type' => BOOLEAN, 'default' => 1},
-			'filepaths.dircache.duration' => {'type' => SCALAR, 'default' => 2},
+			'filepaths.dircache'               => {'type' => BOOLEAN, 'default' => 1},
+			'filepaths.dircache.duration'      => {'type' => SCALAR,  'default' => 2},
+			'filepaths.dircache.purgeinterval' => {'type' => SCALAR,  'default' => 1000},
 		},
 	);
 
@@ -35,6 +36,7 @@ sub _init {
 
 	#initialize this object
 	$self->{'dirs'} = shared_clone({});
+	$self->{'dirs.writes'} = $opt{'filepaths.dircache.purgeinterval'};
 
 	#return the initialized object
 	return $self;
@@ -55,7 +57,7 @@ sub _listDir {
 	my $dir = $cache->{$path};
 
 	#load the directory listing if the current cached listing is stale
-	if(!defined($dir) || $dir->{'expires'} <= time) {
+	if(!defined($dir) || $dir->{'expires'} < time) {
 		#fetch and store the files in the dir cache
 		$dir = {
 			'expires' => time + $config->{'filepaths.dircache.duration'},
@@ -64,6 +66,20 @@ sub _listDir {
 			},
 		};
 		$cache->{$path} = shared_clone($dir);
+		$self->{'dirs.writes'}--;
+
+		# puge stale records after 'purgeinterval' writes
+		if($self->{'dirs.writes'} <= 0) {
+			# reset counter
+			$self->{'dir.writes'} = $config->{'filepaths.dircache.purgeinterval'};
+
+			# remove any expired cache entries
+			foreach(keys %$cache) {
+				if(defined($cache->{$_}) && $cache->{$_}->{'expires'} < time) {
+					delete $cache->{$_};
+				}
+			}
+		}
 	}
 
 	#return the files for the current directory
