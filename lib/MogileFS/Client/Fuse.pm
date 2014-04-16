@@ -551,17 +551,12 @@ sub fuse_unlink {
 
 	#attempt deleting the specified file
 	my $mogc = $self->MogileFS();
-	my ($errcode, $errstr) = (-1, '');
 	eval {$mogc->delete($path)};
 	if($@) {
-		#set the error code and string if we have a MogileFS::Client object
-		if($mogc) {
-			$errcode = $mogc->errcode || -1;
-			$errstr = $mogc->errstr || '';
-		}
-		$self->log(ERROR, "Error unlinking file: $errcode: $errstr");
-		$! = $errstr;
-		$? = $errcode;
+		# log the error
+		my $error = !$mogc ? 'No MogileFS client' : $mogc->errcode . ': ' . $mogc->errstr;
+		$self->fuse->log(ERROR, 'Error unlinking file: ' . $error);
+		$self->fuse->log(ERROR, $@);
 		return -EIO();
 	}
 

@@ -346,13 +346,10 @@ sub getPaths {
 			$self->{'paths'} = shared_clone([]);
 			push @{$self->{'paths'}}, eval {$mogc->get_paths($self->path)};
 			if($@) {
-				#set the error code and string if we have a MogileFS::Client object
-				($?, $!) = (-1, '');
-				if($mogc) {
-					$? = $mogc->errcode || -1;
-					$! = $mogc->errstr || '';
-				}
-				$self->fuse->log(ERROR, 'Error retrieving paths for file: ' . $? . ': ' . $!);
+				# log the error
+				my $error = !$mogc ? 'No MogileFS client' : $mogc->errcode . ': ' . $mogc->errstr;
+				$self->fuse->log(ERROR, 'Error retrieving paths for file: ' . $error);
+				$self->fuse->log(ERROR, $@);
 				die;
 			}
 		}

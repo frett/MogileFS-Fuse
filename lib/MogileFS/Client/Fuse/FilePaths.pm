@@ -384,13 +384,10 @@ sub fuse_rename {
 		return $resp;
 	};
 	if($@ || !$response) {
-		($?, $!) = (-1, '');
-		#set the error code and string if we have a MogileFS::Client object
-		if($mogc) {
-			$? = $mogc->errcode || -1;
-			$! = $mogc->errstr || '';
-		}
-		$self->log(ERROR, "Error renaming file: $?: $!");
+		# log the error
+		my $error = !$mogc ? 'No MogileFS client' : $mogc->errcode . ': ' . $mogc->errstr;
+		$self->fuse->log(ERROR, 'Error renaming file: ' . $error);
+		$self->fuse->log(ERROR, $@) if($@);
 		return -EIO();
 	}
 
