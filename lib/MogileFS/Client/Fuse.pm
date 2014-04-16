@@ -189,8 +189,9 @@ sub MogileFS {
 	if(!defined $client) {
 		my $config = $_[0]->_config;
 		$client = MogileFS::Client->new(
-			'hosts'  => [@{$config->{'trackers'}}],
-			'domain' => $config->{'domain'},
+			'hosts'    => [@{$config->{'trackers'}}],
+			'domain'   => $config->{'domain'},
+			'readonly' => $config->{'readonly'},
 		);
 		$_[0]->_localElem('MogileFS', $client);
 	}
