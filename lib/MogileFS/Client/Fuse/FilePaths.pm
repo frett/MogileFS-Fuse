@@ -236,11 +236,20 @@ sub fuse_fgetattr {
 	my $self = shift;
 	my ($path, $file) = @_;
 
+	# determine the size of the specified file
+	my $size = eval {$file->size()};
+	if($@) {
+		$self->log(ERROR, "error retrieving file size for open file: " . $path);
+		$self->log(ERROR, $@);
+		return -EIO();
+	}
+
 	# generate and return the file attributes
-	return @{$self->_generateAttrs({
+	my $attrs = $self->_generateAttrs({
 		'is_directory' => 0,
-		'size'         => $file->size(),
-	})};
+		'size'         => $size,
+	});
+	return scalar @$attrs ? @$attrs : -ENOENT();
 }
 
 sub fuse_ftruncate {
@@ -271,7 +280,8 @@ sub fuse_getattr {
 	return -ENOENT() if(!defined $finfo);
 
 	# generate and return the file attributes
-	return @{$self->_generateAttrs($finfo)};
+	my $attrs = $self->_generateAttrs($finfo);
+	return scalar @$attrs ? @$attrs : -ENOENT();
 }
 
 sub fuse_getdir {
