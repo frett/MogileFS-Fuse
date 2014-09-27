@@ -167,6 +167,19 @@ sub _read {
 			#have we reached the end of this file?
 			return undef if($res->code == HTTP_REQUEST_RANGE_NOT_SATISFIABLE);
 
+			# reorder input paths based on this error
+			if(!$opt{'output'}) {
+				lock($self);
+
+				# remove the current path and re-add it at the end of the list
+				if($self->{'paths'}) {
+					$self->{'paths'} = shared_clone([
+						(grep {$uri ne $_} @{$self->{'paths'}}),
+						$uri
+					]);
+				}
+			}
+
 			#try the next uri
 			next;
 		}
