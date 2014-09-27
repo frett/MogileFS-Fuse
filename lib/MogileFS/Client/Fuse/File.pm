@@ -60,7 +60,7 @@ sub _flush {
 	my $self = shift;
 
 	#commit the output file
-	my $dest = $self->getOutputDest();
+	my $dest = $self->_getOutputDest();
 	my $res = eval {
 		my $config = $self->fuse->_config;
 		$self->MogileFS->{'backend'}->do_request('create_close', {
@@ -110,7 +110,7 @@ sub _init {
 	return undef if($self->writable && $self->fuse->_config->{'readonly'});
 
 	#short-circuit if the file isn't opened for writing and doesn't exist in MogileFS
-	return undef if(!$self->writable && !$self->getPaths());
+	return undef if(!$self->writable && !$self->_getInputPaths());
 
 	#return the initialized object
 	return $self;
@@ -130,7 +130,7 @@ sub _initIo {
 	#preset a couple values when we are writing a file
 	if($self->writable) {
 		#a previous version exists
-		if($self->getPaths()) {
+		if($self->_getInputPaths()) {
 			#initialize the cow pointer for COW
 			$self->{'cowPtr'} = 0;
 		}
@@ -158,7 +158,7 @@ sub _read {
 	my $ua = $self->fuse->ua;
 	my $headers = ['Range' => 'bytes=' . $offset . '-' . ($offset + $len - 1)];
 	my $res;
-	foreach my $uri ($opt{'output'} ? $self->getOutputDest->{'path'} : $self->getPaths()) {
+	foreach my $uri ($opt{'output'} ? $self->_getOutputDest->{'path'} : $self->_getInputPaths()) {
 		#attempt retrieving the requested data
 		$res = $ua->send_request(HTTP::Request->new('GET' => $uri, $headers));
 
@@ -211,7 +211,7 @@ sub _write {
 	my ($offset, $buf) = @_;
 
 	#attempt writing the buffer to the output destination
-	if(my $dest = $self->getOutputDest()) {
+	if(my $dest = $self->_getOutputDest()) {
 		#short-circuit if an invalid buffer was provided
 		if(defined($buf) && ref($buf) ne 'SCALAR') {
 			$self->fuse->log(ERROR, 'Invalid buffer passed to _write');
@@ -286,7 +286,7 @@ sub fuse {
 }
 
 #method that will return an output path for writing to this file
-sub getOutputDest {
+sub _getOutputDest {
 	my $self = shift;
 
 	#short-circuit if we are in a read only mode
@@ -333,7 +333,7 @@ sub getOutputDest {
 }
 
 #method that will return the paths for the current file
-sub getPaths {
+sub _getInputPaths {
 	my $self = shift;
 
 	#load the file paths
@@ -403,7 +403,7 @@ sub size {
 
 	# use the output file size if we have one and finished copy-on-write
 	if($output && !defined $cowPtr) {
-		if(my $dest = $self->getOutputDest()) {
+		if(my $dest = $self->_getOutputDest()) {
 			return $dest->{'size'};
 		}
 	}
@@ -433,7 +433,7 @@ sub truncate {
 	my ($size) = @_;
 
 	# only process if we are writing to an output file
-	if(my $dest = $self->getOutputDest()) {
+	if(my $dest = $self->_getOutputDest()) {
 		# flush the file if we are past where we need to truncate the file at
 		if($dest->{'size'} > $size) {
 			$self->_markAsDirty;
