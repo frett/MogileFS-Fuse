@@ -387,8 +387,8 @@ sub fuse_rename {
 	if($@ || !$response) {
 		# log the error
 		my $error = !$mogc ? 'No MogileFS client' : $mogc->errcode . ': ' . $mogc->errstr;
-		$self->fuse->log(ERROR, 'Error renaming file: ' . $error);
-		$self->fuse->log(ERROR, $@) if($@);
+		$self->log(ERROR, 'Error renaming file: ' . $error);
+		$self->log(ERROR, $@) if($@);
 		return -EIO();
 	}
 
