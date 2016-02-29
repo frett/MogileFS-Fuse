@@ -556,8 +556,8 @@ sub fuse_unlink {
 	if($@) {
 		# log the error
 		my $error = !$mogc ? 'No MogileFS client' : $mogc->errcode . ': ' . $mogc->errstr;
-		$self->fuse->log(ERROR, 'Error unlinking file: ' . $error);
-		$self->fuse->log(ERROR, $@);
+		$self->log(ERROR, 'Error unlinking file: ' . $error);
+		$self->log(ERROR, $@);
 		return -EIO();
 	}
 
